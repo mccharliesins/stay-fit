@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
@@ -11,10 +11,13 @@ import {
   ScrollView,
   ActivityIndicator,
   Alert,
+  NetInfo,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../../context/AuthContext";
 import { createUserProfile } from "../../services/databaseService";
+import { checkNetworkConnection } from "../../utils/networkCheck";
+import { SUPABASE_URL } from "@env";
 
 const SignUpScreen = ({ navigation }) => {
   const [name, setName] = useState("");
@@ -22,8 +25,9 @@ const SignUpScreen = ({ navigation }) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingNetwork, setIsCheckingNetwork] = useState(false);
 
-  const { signUp } = useAuth();
+  const { signUp, networkError } = useAuth();
 
   const handleSignUp = async () => {
     if (!name || !email || !password || !confirmPassword) {
@@ -41,6 +45,26 @@ const SignUpScreen = ({ navigation }) => {
       return;
     }
 
+    // Check network connection first
+    setIsCheckingNetwork(true);
+    try {
+      const supabaseUrl = SUPABASE_URL || "https://example.supabase.co";
+      const networkResult = await checkNetworkConnection(supabaseUrl);
+
+      if (!networkResult.connected) {
+        Alert.alert(
+          "Network Error",
+          "Unable to connect to the server. Please check your internet connection and try again.",
+          [{ text: "OK" }]
+        );
+        return;
+      }
+    } catch (error) {
+      console.error("Network check error:", error);
+    } finally {
+      setIsCheckingNetwork(false);
+    }
+
     setIsLoading(true);
 
     try {
@@ -52,30 +76,53 @@ const SignUpScreen = ({ navigation }) => {
       });
 
       if (error) {
-        Alert.alert("Error", error.message);
+        if (
+          error.message.includes("Network") ||
+          error.message.includes("fetch")
+        ) {
+          Alert.alert(
+            "Network Error",
+            "Unable to connect to the server. Please check your internet connection and try again.",
+            [{ text: "OK" }]
+          );
+        } else {
+          Alert.alert("Error", error.message);
+        }
         return;
       }
 
       // Create user profile in the database
       if (data?.user) {
-        await createUserProfile({
-          id: data.user.id,
-          name,
-          email,
-          age: null,
-          weight: null,
-          height: null,
-          goal: null,
-          created_at: new Date().toISOString(),
-        });
-      }
+        try {
+          await createUserProfile({
+            id: data.user.id,
+            name,
+            email,
+            age: null,
+            weight: null,
+            height: null,
+            goal: null,
+            created_at: new Date().toISOString(),
+          });
 
-      Alert.alert(
-        "Success",
-        "Your account has been created. Please check your email to confirm your registration.",
-        [{ text: "OK", onPress: () => navigation.navigate("SignIn") }]
-      );
+          Alert.alert(
+            "Success",
+            "Your account has been created. Please check your email to confirm your registration.",
+            [{ text: "OK", onPress: () => navigation.navigate("SignIn") }]
+          );
+        } catch (profileError) {
+          console.error("Error creating profile:", profileError);
+
+          // Still consider signup successful even if profile creation fails
+          Alert.alert(
+            "Account Created",
+            "Your account has been created, but there was an issue setting up your profile. Please try updating your profile later.",
+            [{ text: "OK", onPress: () => navigation.navigate("SignIn") }]
+          );
+        }
+      }
     } catch (error) {
+      console.error("Signup error:", error);
       Alert.alert("Error", error.message);
     } finally {
       setIsLoading(false);
@@ -149,14 +196,23 @@ const SignUpScreen = ({ navigation }) => {
             <TouchableOpacity
               style={styles.signUpButton}
               onPress={handleSignUp}
-              disabled={isLoading}
+              disabled={isLoading || isCheckingNetwork}
             >
-              {isLoading ? (
+              {isLoading || isCheckingNetwork ? (
                 <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.signUpButtonText}>Sign Up</Text>
               )}
             </TouchableOpacity>
+
+            {networkError && (
+              <View style={styles.errorContainer}>
+                <Text style={styles.errorText}>
+                  Network connection issue. Please check your internet
+                  connection and try again.
+                </Text>
+              </View>
+            )}
 
             <View style={styles.signInContainer}>
               <Text style={styles.signInText}>Already have an account?</Text>
@@ -230,6 +286,17 @@ const styles = StyleSheet.create({
     color: "white",
     fontSize: 18,
     fontWeight: "bold",
+  },
+  errorContainer: {
+    backgroundColor: "#ffebee",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 20,
+  },
+  errorText: {
+    color: "#d32f2f",
+    fontSize: 14,
+    textAlign: "center",
   },
   signInContainer: {
     flexDirection: "row",

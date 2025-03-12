@@ -92,9 +92,11 @@ const ProfileScreen = () => {
   };
 
   const handlePickImage = async () => {
+    console.log("handlePickImage called");
     const permissionResult =
       await ImagePicker.requestMediaLibraryPermissionsAsync();
 
+    console.log("Permission result:", permissionResult);
     if (permissionResult.granted === false) {
       Alert.alert(
         "Permission Required",
@@ -103,49 +105,62 @@ const ProfileScreen = () => {
       return;
     }
 
-    const result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [1, 1],
-      quality: 0.8,
-    });
+    try {
+      console.log("Launching image picker...");
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: [ImagePicker.MediaType.Images],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
 
-    if (!result.canceled) {
-      setIsSaving(true);
+      console.log("Image picker result:", result);
+      if (!result.canceled) {
+        setIsSaving(true);
 
-      try {
-        const uri = result.assets[0].uri;
-        const fileExt = uri.split(".").pop();
-        const fileName = `${user.id}-profile.${fileExt}`;
-        const filePath = `profiles/${fileName}`;
+        try {
+          const uri = result.assets[0].uri;
+          console.log("Selected image URI:", uri);
+          const fileExt = uri.split(".").pop();
+          const fileName = `${user.id}-profile.${fileExt}`;
+          const filePath = `profiles/${fileName}`;
 
-        // Upload to Supabase Storage
-        const { data, error } = await uploadFile(
-          "profile-images",
-          filePath,
-          uri
-        );
+          console.log("Uploading to path:", filePath);
+          // Upload to Supabase Storage
+          const { data, error } = await uploadFile(
+            "profile-images",
+            filePath,
+            uri
+          );
 
-        if (error) {
-          throw error;
+          if (error) {
+            console.error("Upload error:", error);
+            throw error;
+          }
+
+          console.log("Upload successful:", data);
+          // Update profile with image URL
+          const { error: updateError } = await updateUserProfile(user.id, {
+            profile_image: data.publicUrl,
+            updated_at: new Date().toISOString(),
+          });
+
+          if (updateError) {
+            console.error("Profile update error:", updateError);
+            throw updateError;
+          }
+
+          setProfileImage(data.publicUrl);
+        } catch (error) {
+          console.error("Error in image upload process:", error);
+          Alert.alert("Error", "Failed to upload image: " + error.message);
+        } finally {
+          setIsSaving(false);
         }
-
-        // Update profile with image URL
-        const { error: updateError } = await updateUserProfile(user.id, {
-          profile_image: data.publicUrl,
-          updated_at: new Date().toISOString(),
-        });
-
-        if (updateError) {
-          throw updateError;
-        }
-
-        setProfileImage(data.publicUrl);
-      } catch (error) {
-        Alert.alert("Error", "Failed to upload image: " + error.message);
-      } finally {
-        setIsSaving(false);
       }
+    } catch (error) {
+      console.error("Error launching image picker:", error);
+      Alert.alert("Error", "Failed to open image picker: " + error.message);
     }
   };
 
@@ -179,7 +194,13 @@ const ProfileScreen = () => {
       <ScrollView contentContainerStyle={styles.content}>
         <TouchableOpacity
           style={styles.profileImageContainer}
-          onPress={isEditing ? handlePickImage : null}
+          onPress={() => {
+            console.log("Profile image pressed, isEditing:", isEditing);
+            if (isEditing) {
+              handlePickImage();
+            }
+          }}
+          disabled={!isEditing}
         >
           {profileImage ? (
             <Image source={{ uri: profileImage }} style={styles.profileImage} />
