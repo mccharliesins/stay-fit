@@ -1,3 +1,4 @@
+import "react-native-get-random-values";
 import {
   S3Client,
   PutObjectCommand,
