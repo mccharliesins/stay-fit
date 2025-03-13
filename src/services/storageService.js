@@ -55,6 +55,35 @@ export const checkBucket = async (bucket) => {
   }
 };
 
+// Check if required storage buckets exist
+export const checkStorageBuckets = async () => {
+  try {
+    console.log("Checking storage buckets...");
+
+    // Check avatars bucket
+    const avatarsResult = await checkBucket("avatars");
+    console.log("Avatars bucket check:", avatarsResult);
+
+    // Check workout-images bucket
+    const workoutImagesResult = await checkBucket("workout-images");
+    console.log("Workout images bucket check:", workoutImagesResult);
+
+    return {
+      avatarsExists: avatarsResult.exists,
+      avatarsError: avatarsResult.error,
+      workoutImagesExists: workoutImagesResult.exists,
+      workoutImagesError: workoutImagesResult.error,
+    };
+  } catch (error) {
+    console.error("Error checking storage buckets:", error);
+    return {
+      avatarsExists: false,
+      workoutImagesExists: false,
+      error,
+    };
+  }
+};
+
 // Upload a file to S3
 export const uploadFile = async (
   bucket,
