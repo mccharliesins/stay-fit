@@ -10,6 +10,7 @@ import {
   Modal,
   Dimensions,
   PanResponder,
+  Platform,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../../context/AuthContext";
@@ -248,9 +249,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: theme.background,
+    padding: 0,
   },
   backgroundImage: {
-    flex: 1,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
     width: "100%",
     height: "100%",
     resizeMode: "cover",
@@ -258,7 +264,8 @@ const styles = StyleSheet.create({
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.5)",
-    padding: 24,
+    paddingHorizontal: 24,
+    paddingTop: Platform.OS === "ios" ? 50 : 24,
     justifyContent: "space-between",
   },
   header: {
