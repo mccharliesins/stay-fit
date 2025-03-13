@@ -266,6 +266,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(0, 0, 0, 0.5)",
     paddingHorizontal: 24,
     paddingTop: Platform.OS === "ios" ? 50 : 24,
+    paddingBottom: Platform.OS === "ios" ? 34 : 24,
     justifyContent: "space-between",
   },
   header: {
@@ -337,6 +338,7 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: 40,
     paddingHorizontal: 16,
+    marginBottom: Platform.OS === "ios" ? 20 : 16,
   },
   signUpButton: {
     backgroundColor: theme.white,
