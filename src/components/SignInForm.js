@@ -11,6 +11,7 @@ import {
   Alert,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
+import { useNavigation } from "@react-navigation/native";
 
 // Theme colors
 const theme = {
@@ -28,6 +29,7 @@ const SignInForm = ({ onClose }) => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const { signIn } = useAuth();
+  const navigation = useNavigation();
 
   const handleSubmit = async () => {
     if (isLoading) return;
@@ -49,6 +51,11 @@ const SignInForm = ({ onClose }) => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleForgotPassword = () => {
+    onClose();
+    navigation.navigate("ForgotPassword");
   };
 
   return (
@@ -83,6 +90,13 @@ const SignInForm = ({ onClose }) => {
             onChangeText={setPassword}
             editable={!isLoading}
           />
+
+          <TouchableOpacity
+            style={styles.forgotPasswordButton}
+            onPress={handleForgotPassword}
+          >
+            <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity
@@ -123,12 +137,13 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 28,
-    fontWeight: "bold",
+    fontFamily: "Poppins_700Bold",
     color: theme.text,
     marginBottom: 8,
   },
   subtitle: {
     fontSize: 16,
+    fontFamily: "Poppins_400Regular",
     color: theme.secondary,
     lineHeight: 22,
   },
@@ -141,9 +156,20 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 16,
     fontSize: 16,
+    fontFamily: "Poppins_400Regular",
     color: theme.text,
     borderWidth: 1,
     borderColor: "transparent",
+  },
+  forgotPasswordButton: {
+    alignSelf: "flex-end",
+    marginTop: -8,
+    marginBottom: 16,
+  },
+  forgotPasswordText: {
+    color: theme.primary,
+    fontSize: 14,
+    fontFamily: "Poppins_600SemiBold",
   },
   button: {
     backgroundColor: theme.primary,
@@ -159,7 +185,7 @@ const styles = StyleSheet.create({
   buttonText: {
     color: theme.white,
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "Poppins_600SemiBold",
   },
   closeButton: {
     padding: 16,
@@ -168,7 +194,7 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: theme.secondary,
     fontSize: 16,
-    fontWeight: "500",
+    fontFamily: "Poppins_500Medium",
   },
 });
 

@@ -15,6 +15,12 @@ import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../../context/AuthContext";
 import SignInForm from "../../components/SignInForm";
 import SignUpForm from "../../components/SignUpForm";
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from "@expo-google-fonts/poppins";
 
 const { width, height } = Dimensions.get("window");
 
@@ -34,6 +40,12 @@ function SignInScreen({ navigation }) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const slideAnim = useRef(new Animated.Value(0)).current;
   const buttonsAnim = useRef(new Animated.Value(0)).current;
+
+  let [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
 
   const slides = [
     {
@@ -130,6 +142,10 @@ function SignInScreen({ navigation }) {
   const handleCloseSignUpForm = () => {
     setShowSignUpForm(false);
   };
+
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -252,6 +268,7 @@ const styles = StyleSheet.create({
     fontSize: 32,
     fontWeight: "bold",
     color: theme.white,
+    fontFamily: "Poppins_700Bold",
   },
   content: {
     flex: 1,
@@ -270,24 +287,24 @@ const styles = StyleSheet.create({
     marginBottom: 40,
   },
   title: {
-    fontSize: 42,
-    fontWeight: "800",
+    fontSize: 32,
     color: theme.white,
     marginBottom: 8,
     letterSpacing: 1,
+    fontFamily: "Poppins_700Bold",
   },
   subtitle: {
-    fontSize: 42,
-    fontWeight: "800",
+    fontSize: 32,
     color: theme.white,
     marginBottom: 8,
     letterSpacing: 1,
+    fontFamily: "Poppins_700Bold",
   },
   emphasis: {
-    fontSize: 42,
-    fontWeight: "800",
+    fontSize: 32,
     color: theme.accent,
     letterSpacing: 1,
+    fontFamily: "Poppins_700Bold",
   },
   dotsContainer: {
     flexDirection: "row",
@@ -311,6 +328,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     marginTop: 40,
+    paddingHorizontal: 16,
   },
   signUpButton: {
     backgroundColor: theme.white,
@@ -323,7 +341,7 @@ const styles = StyleSheet.create({
   signUpButtonText: {
     color: theme.text,
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "Poppins_600SemiBold",
   },
   logInButton: {
     borderRadius: 30,
@@ -336,7 +354,7 @@ const styles = StyleSheet.create({
   logInButtonText: {
     color: theme.white,
     fontSize: 16,
-    fontWeight: "600",
+    fontFamily: "Poppins_600SemiBold",
   },
 });
 
