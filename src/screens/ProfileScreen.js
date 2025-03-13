@@ -122,16 +122,12 @@ const ProfileScreen = () => {
           const uri = result.assets[0].uri;
           console.log("Selected image URI:", uri);
           const fileExt = uri.split(".").pop();
-          const fileName = `${user.id}-profile.${fileExt}`;
-          const filePath = `profiles/${fileName}`;
+          const fileName = `${user.id}-avatar.${fileExt}`;
+          const filePath = `${fileName}`;
 
           console.log("Uploading to path:", filePath);
           // Upload to Supabase Storage
-          const { data, error } = await uploadFile(
-            "profile-images",
-            filePath,
-            uri
-          );
+          const { data, error } = await uploadFile("avatars", filePath, uri);
 
           if (error) {
             console.error("Upload error:", error);
