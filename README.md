@@ -1,78 +1,84 @@
-# StayFit
+# 💪 StayFit - Your Personal Fitness Companion
 
-A fitness tracking and workout management mobile application built with React Native and Expo.
+StayFit is a modern, user-friendly mobile application that helps you achieve your fitness goals through personalized workout tracking and health monitoring. Built with React Native and Expo, it offers a seamless experience across both iOS and Android platforms.
 
-## Features
+![StayFit Banner](./assets/banner.png)
 
-- Home screen with quick access to workouts and profile
-- Workout listing with sample workout data
-- User profile management with editable fields
-- BMI calculation based on user's height and weight
-- Modern and clean UI design
+## ✨ Key Features
 
-## Technical Details
+- **Smart Workout Tracking** - Log and monitor your exercises with ease
+- **Personalized Profile** - Track your progress with BMI calculations and fitness metrics
+- **Clean, Modern UI** - Intuitive interface designed for the best user experience
+- **Cross-Platform** - Available on both iOS and Android devices
+- **Secure Storage** - Your fitness data is safely stored and easily accessible
 
-- Built with Expo SDK 52
-- Uses React Navigation for screen navigation
-- Implements a structured project organization
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js (v14 or newer)
+- Node.js (v14+)
 - npm or yarn
-- Expo CLI
+- Expo Go app on your mobile device
 
-### Installation
+### Installation in 3 Easy Steps
 
-1. Clone the repository
-2. Install dependencies:
+1. **Clone & Install**
 
-   ```
+   ```bash
+   git clone https://github.com/yourusername/stayfit.git
+   cd stayfit
    npm install
    ```
 
-   or
+2. **Set Up Environment**
 
-   ```
-   yarn install
-   ```
+   - Copy `.env.example` to `.env`
+   - Configure your environment variables
 
-3. Start the development server:
-
-   ```
+3. **Start Development Server**
+   ```bash
    npm start
    ```
+   Then scan the QR code with Expo Go app (Android) or Camera app (iOS)
 
-   or
+## 🛠️ Tech Stack
 
-   ```
-   yarn start
-   ```
+- **Frontend:** React Native, Expo SDK 52
+- **Navigation:** React Navigation v7
+- **State Management:** React Context API
+- **Storage:** AWS S3, Supabase
+- **UI Components:** Custom-built with React Native core components
 
-4. Use the Expo Go app on your mobile device to scan the QR code, or run on an emulator.
-
-## Project Structure
+## 📁 Project Structure
 
 ```
 stayfit/
-├── assets/            # Images, fonts, and other static assets
 ├── src/
-│   ├── components/    # Reusable UI components
-│   ├── screens/       # Screen components
-│   ├── navigation/    # Navigation configuration
-│   ├── utils/         # Utility functions and helpers
-│   └── assets/        # App-specific assets
-├── App.js             # Main application component
-└── package.json       # Project dependencies and scripts
+│   ├── components/  # Reusable UI components
+│   ├── screens/     # Screen components
+│   ├── navigation/  # Navigation setup
+│   ├── utils/      # Helper functions
+│   └── hooks/      # Custom React hooks
+├── assets/         # Images, fonts, etc.
+└── supabase/      # Backend configuration
 ```
 
-## Future Enhancements
+## 🔜 Roadmap
 
-- Add workout details screen
-- Implement workout tracking functionality
-- Add exercise library
-- Integrate with health APIs
-- Add user authentication
-- Implement data persistence
+- [ ] Workout Analytics Dashboard
+- [ ] Social Features & Workout Sharing
+- [ ] AI-Powered Workout Recommendations
+- [ ] Integration with Health Apps
+- [ ] Offline Mode Support
+
+## 🤝 Contributing
+
+We welcome contributions! Please check our [Contributing Guidelines](CONTRIBUTING.md) for details.
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙋‍♂️ Support
+
+Having issues? [Open an issue](https://github.com/yourusername/stayfit/issues) or contact us at support@stayfit.com
