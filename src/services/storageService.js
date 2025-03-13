@@ -19,13 +19,28 @@ import {
 // Initialize S3 client
 const s3Client = new S3Client({
   forcePathStyle: true,
-  region: S3_REGION,
+  region: S3_REGION || "us-east-1",
   endpoint: S3_ENDPOINT,
   credentials: {
     accessKeyId: S3_ACCESS_KEY_ID,
     secretAccessKey: S3_SECRET_ACCESS_KEY,
   },
 });
+
+// Add error handling for missing configuration
+if (!S3_REGION) {
+  console.warn(
+    "S3_REGION not set in environment variables, using default: us-east-1"
+  );
+}
+if (!S3_ENDPOINT) {
+  console.error("S3_ENDPOINT is required but not set in environment variables");
+}
+if (!S3_ACCESS_KEY_ID || !S3_SECRET_ACCESS_KEY) {
+  console.error(
+    "S3 credentials are required but not set in environment variables"
+  );
+}
 
 // Check if bucket exists
 export const checkBucket = async (bucket) => {
