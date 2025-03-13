@@ -19,7 +19,7 @@ import {
 // Initialize S3 client
 const s3Client = new S3Client({
   forcePathStyle: true,
-  region: S3_REGION || "us-east-1",
+  region: S3_REGION || "us-east-2",
   endpoint: S3_ENDPOINT,
   credentials: {
     accessKeyId: S3_ACCESS_KEY_ID,
@@ -30,7 +30,7 @@ const s3Client = new S3Client({
 // Add error handling for missing configuration
 if (!S3_REGION) {
   console.warn(
-    "S3_REGION not set in environment variables, using default: us-east-1"
+    "S3_REGION not set in environment variables, using default: us-east-2"
   );
 }
 if (!S3_ENDPOINT) {
@@ -131,11 +131,11 @@ export const uploadFile = async (
       );
     }
 
-    // Construct the public URL
+    // Construct the public URL for Supabase storage
     const publicUrl = `${S3_ENDPOINT.replace(
-      "/s3",
+      "/storage/v1/s3",
       ""
-    )}/object/public/${bucket}/${path}`;
+    )}/storage/v1/object/public/${bucket}/${path}`;
     console.log("Public URL constructed:", publicUrl);
 
     return {
