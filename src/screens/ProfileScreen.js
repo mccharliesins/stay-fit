@@ -26,6 +26,7 @@ const ProfileScreen = () => {
   const [height, setHeight] = useState("");
   const [goal, setGoal] = useState("");
   const [profileImage, setProfileImage] = useState(null);
+  const [imageTimestamp, setImageTimestamp] = useState(Date.now());
   const [isEditing, setIsEditing] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -54,6 +55,7 @@ const ProfileScreen = () => {
         setHeight(data.height ? data.height.toString() : "");
         setGoal(data.goal || "");
         setProfileImage(data.avatar_url || null);
+        setImageTimestamp(Date.now());
       }
     } catch (error) {
       console.error("Error loading profile:", error.message);
@@ -147,6 +149,7 @@ const ProfileScreen = () => {
           }
 
           setProfileImage(data.publicUrl);
+          setImageTimestamp(Date.now());
         } catch (error) {
           console.error("Error in image upload process:", error);
           Alert.alert("Error", "Failed to upload image: " + error.message);
@@ -199,7 +202,13 @@ const ProfileScreen = () => {
           disabled={!isEditing}
         >
           {profileImage ? (
-            <Image source={{ uri: profileImage }} style={styles.profileImage} />
+            <Image
+              source={{
+                uri: `${profileImage}?t=${imageTimestamp}`,
+                cache: "reload",
+              }}
+              style={styles.profileImage}
+            />
           ) : (
             <View style={styles.profileImagePlaceholder}>
               <Text style={styles.profileInitial}>{name.charAt(0)}</Text>
