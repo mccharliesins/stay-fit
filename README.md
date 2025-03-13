@@ -81,4 +81,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙋‍♂️ Support
 
-Having issues? [Open an issue](https://github.com/mccharliesins/stayfit/issues) or contact us at support@stayfit.com
+Having issues? [Open an issue](https://github.com/mccharliesins/stayfit/issues)
