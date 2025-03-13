@@ -1,22 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
   SafeAreaView,
-  KeyboardAvoidingView,
-  Platform,
-  ActivityIndicator,
   ImageBackground,
-  Linking,
   Animated,
   Modal,
   Dimensions,
+  PanResponder,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../../context/AuthContext";
 import SignInForm from "../../components/SignInForm";
+import SignUpForm from "../../components/SignUpForm";
 
 const { width, height } = Dimensions.get("window");
 
@@ -30,11 +28,12 @@ const theme = {
   white: "#FFFFFF",
 };
 
-const SignInScreen = ({ navigation }) => {
-  const [isLoading, setIsLoading] = useState(false);
+function SignInScreen({ navigation }) {
   const [showSignInForm, setShowSignInForm] = useState(false);
+  const [showSignUpForm, setShowSignUpForm] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
-  const { signIn } = useAuth();
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const buttonsAnim = useRef(new Animated.Value(0)).current;
 
   const slides = [
     {
@@ -54,63 +53,70 @@ const SignInScreen = ({ navigation }) => {
     },
   ];
 
-  // Animation values
-  const fadeAnim = {
-    title: new Animated.Value(0),
-    subtitle: new Animated.Value(0),
-    emphasis: new Animated.Value(0),
-    buttons: new Animated.Value(0),
-  };
+  const panResponder = useRef(
+    PanResponder.create({
+      onStartShouldSetPanResponder: () => true,
+      onMoveShouldSetPanResponder: () => true,
+      onPanResponderGrant: () => {
+        slideAnim.setOffset(slideAnim._value);
+      },
+      onPanResponderMove: (_, gestureState) => {
+        const { dx } = gestureState;
+        const newValue = -currentSlide * width + dx;
+        if (newValue <= 0 && newValue >= -(slides.length - 1) * width) {
+          slideAnim.setValue(newValue);
+        }
+      },
+      onPanResponderRelease: (_, gestureState) => {
+        const { dx, vx } = gestureState;
+        slideAnim.flattenOffset();
 
-  const scaleAnim = {
-    signUp: new Animated.Value(1),
-    logIn: new Animated.Value(1),
-  };
+        let newIndex = currentSlide;
+        if (Math.abs(vx) > 0.5 || Math.abs(dx) > width / 3) {
+          if (dx > 0 && currentSlide > 0) {
+            newIndex = currentSlide - 1;
+          } else if (dx < 0 && currentSlide < slides.length - 1) {
+            newIndex = currentSlide + 1;
+          }
+        }
+
+        Animated.spring(slideAnim, {
+          toValue: -newIndex * width,
+          useNativeDriver: true,
+          friction: 8,
+          tension: 40,
+        }).start();
+
+        setCurrentSlide(newIndex);
+      },
+    })
+  ).current;
 
   useEffect(() => {
-    // Sequence of fade-in animations
-    const startAnimations = () => {
-      Animated.sequence([
-        Animated.parallel([
-          Animated.timing(fadeAnim.title, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(fadeAnim.subtitle, {
-            toValue: 1,
-            duration: 800,
-            delay: 200,
-            useNativeDriver: true,
-          }),
-        ]),
-        Animated.timing(fadeAnim.emphasis, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-        Animated.timing(fadeAnim.buttons, {
-          toValue: 1,
-          duration: 800,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    };
-
-    // Reset and start animations when slide changes
-    Object.values(fadeAnim).forEach((anim) => anim.setValue(0));
-    startAnimations();
+    // Initial buttons fade in
+    Animated.timing(buttonsAnim, {
+      toValue: 1,
+      duration: 1000,
+      useNativeDriver: true,
+    }).start();
 
     // Auto-advance slides
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      const nextSlide = (currentSlide + 1) % slides.length;
+      setCurrentSlide(nextSlide);
+      Animated.spring(slideAnim, {
+        toValue: -nextSlide * width,
+        useNativeDriver: true,
+        friction: 8,
+        tension: 40,
+      }).start();
     }, 4000);
 
     return () => clearInterval(interval);
   }, [currentSlide]);
 
   const handleCreateAccount = () => {
-    navigation.navigate("SignUp");
+    setShowSignUpForm(true);
   };
 
   const handleSignIn = () => {
@@ -121,18 +127,8 @@ const SignInScreen = ({ navigation }) => {
     setShowSignInForm(false);
   };
 
-  const handlePressIn = (button) => {
-    Animated.spring(scaleAnim[button], {
-      toValue: 0.95,
-      useNativeDriver: true,
-    }).start();
-  };
-
-  const handlePressOut = (button) => {
-    Animated.spring(scaleAnim[button], {
-      toValue: 1,
-      useNativeDriver: true,
-    }).start();
+  const handleCloseSignUpForm = () => {
+    setShowSignUpForm(false);
   };
 
   return (
@@ -148,62 +144,25 @@ const SignInScreen = ({ navigation }) => {
           </View>
 
           <View style={styles.content}>
-            <View style={styles.titleContainer}>
-              <Animated.Text
-                style={[
-                  styles.title,
-                  {
-                    opacity: fadeAnim.title,
-                    transform: [
-                      {
-                        translateY: fadeAnim.title.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [20, 0],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                {slides[currentSlide].title}
-              </Animated.Text>
-              <Animated.Text
-                style={[
-                  styles.subtitle,
-                  {
-                    opacity: fadeAnim.subtitle,
-                    transform: [
-                      {
-                        translateY: fadeAnim.subtitle.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [20, 0],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                {slides[currentSlide].subtitle}
-              </Animated.Text>
-              <Animated.Text
-                style={[
-                  styles.emphasis,
-                  {
-                    opacity: fadeAnim.emphasis,
-                    transform: [
-                      {
-                        translateY: fadeAnim.emphasis.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [20, 0],
-                        }),
-                      },
-                    ],
-                  },
-                ]}
-              >
-                {slides[currentSlide].emphasis}
-              </Animated.Text>
-            </View>
+            <Animated.View
+              style={[
+                styles.slidesContainer,
+                {
+                  transform: [{ translateX: slideAnim }],
+                },
+              ]}
+              {...panResponder.panHandlers}
+            >
+              {slides.map((slide, index) => (
+                <View key={index} style={styles.slide}>
+                  <View style={styles.titleContainer}>
+                    <Text style={styles.title}>{slide.title}</Text>
+                    <Text style={styles.subtitle}>{slide.subtitle}</Text>
+                    <Text style={styles.emphasis}>{slide.emphasis}</Text>
+                  </View>
+                </View>
+              ))}
+            </Animated.View>
 
             <View style={styles.dotsContainer}>
               {slides.map((_, index) => (
@@ -222,10 +181,10 @@ const SignInScreen = ({ navigation }) => {
             style={[
               styles.buttonContainer,
               {
-                opacity: fadeAnim.buttons,
+                opacity: buttonsAnim,
                 transform: [
                   {
-                    translateY: fadeAnim.buttons.interpolate({
+                    translateY: buttonsAnim.interpolate({
                       inputRange: [0, 1],
                       outputRange: [50, 0],
                     }),
@@ -234,31 +193,16 @@ const SignInScreen = ({ navigation }) => {
               },
             ]}
           >
-            <Animated.View
-              style={[{ transform: [{ scale: scaleAnim.signUp }] }]}
+            <TouchableOpacity
+              style={styles.signUpButton}
+              onPress={handleCreateAccount}
             >
-              <TouchableOpacity
-                style={styles.signUpButton}
-                onPress={handleCreateAccount}
-                onPressIn={() => handlePressIn("signUp")}
-                onPressOut={() => handlePressOut("signUp")}
-              >
-                <Text style={styles.signUpButtonText}>Sign up</Text>
-              </TouchableOpacity>
-            </Animated.View>
+              <Text style={styles.signUpButtonText}>Sign up</Text>
+            </TouchableOpacity>
 
-            <Animated.View
-              style={[{ transform: [{ scale: scaleAnim.logIn }] }]}
-            >
-              <TouchableOpacity
-                style={styles.logInButton}
-                onPress={handleSignIn}
-                onPressIn={() => handlePressIn("logIn")}
-                onPressOut={() => handlePressOut("logIn")}
-              >
-                <Text style={styles.logInButtonText}>Log in</Text>
-              </TouchableOpacity>
-            </Animated.View>
+            <TouchableOpacity style={styles.logInButton} onPress={handleSignIn}>
+              <Text style={styles.logInButtonText}>Log in</Text>
+            </TouchableOpacity>
           </Animated.View>
         </View>
 
@@ -270,10 +214,19 @@ const SignInScreen = ({ navigation }) => {
         >
           <SignInForm onClose={handleCloseSignInForm} />
         </Modal>
+
+        <Modal
+          visible={showSignUpForm}
+          transparent
+          animationType="slide"
+          onRequestClose={handleCloseSignUpForm}
+        >
+          <SignUpForm onClose={handleCloseSignUpForm} />
+        </Modal>
       </ImageBackground>
     </SafeAreaView>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -302,6 +255,15 @@ const styles = StyleSheet.create({
   },
   content: {
     flex: 1,
+    overflow: "hidden",
+  },
+  slidesContainer: {
+    flexDirection: "row",
+    width: width * 3, // Number of slides
+  },
+  slide: {
+    width: width,
+    paddingHorizontal: 24,
     justifyContent: "center",
   },
   titleContainer: {
@@ -331,6 +293,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "center",
     marginTop: 40,
+    position: "absolute",
+    bottom: 20,
+    left: 0,
+    right: 0,
   },
   dot: {
     width: 8,
@@ -344,7 +310,7 @@ const styles = StyleSheet.create({
     width: 24,
   },
   buttonContainer: {
-    marginBottom: 40,
+    marginTop: 40,
   },
   signUpButton: {
     backgroundColor: theme.white,
