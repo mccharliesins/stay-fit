@@ -26,7 +26,7 @@ export default function App() {
   const [databaseStatus, setDatabaseStatus] = useState(null);
   const [storageStatus, setStorageStatus] = useState(null);
   const [isCheckingSetup, setIsCheckingSetup] = useState(false);
-  const [bypassStorageCheck, setBypassStorageCheck] = useState(true); // TEMPORARY FIX: Bypass storage check
+  const [bypassStorageCheck, setBypassStorageCheck] = useState(true); // Set to true by default
 
   const checkNetwork = async () => {
     try {
