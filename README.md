@@ -25,7 +25,7 @@ StayFit is a modern, user-friendly mobile application that helps you achieve you
 1. **Clone & Install**
 
    ```bash
-   git clone https://github.com/yourusername/stayfit.git
+   git clone https://github.com/mccharliesins/stayfit.git
    cd stayfit
    npm install
    ```
@@ -81,4 +81,4 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 
 ## 🙋‍♂️ Support
 
-Having issues? [Open an issue](https://github.com/yourusername/stayfit/issues) or contact us at support@stayfit.com
+Having issues? [Open an issue](https://github.com/mccharliesins/stayfit/issues) or contact us at support@stayfit.com
