@@ -53,7 +53,7 @@ const ProfileScreen = () => {
         setWeight(data.weight ? data.weight.toString() : "");
         setHeight(data.height ? data.height.toString() : "");
         setGoal(data.goal || "");
-        setProfileImage(data.profile_image || null);
+        setProfileImage(data.avatar_url || null);
       }
     } catch (error) {
       console.error("Error loading profile:", error.message);
@@ -137,7 +137,7 @@ const ProfileScreen = () => {
           console.log("Upload successful:", data);
           // Update profile with image URL
           const { error: updateError } = await updateUserProfile(user.id, {
-            profile_image: data.publicUrl,
+            avatar_url: data.publicUrl,
             updated_at: new Date().toISOString(),
           });
 
