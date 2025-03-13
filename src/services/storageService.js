@@ -1,60 +1,46 @@
-import supabase from "../utils/supabaseClient";
+import {
+  S3Client,
+  PutObjectCommand,
+  GetObjectCommand,
+  DeleteObjectCommand,
+  ListObjectsCommand,
+  HeadBucketCommand,
+} from "@aws-sdk/client-s3";
 import * as FileSystem from "expo-file-system";
 import { decode } from "base64-arraybuffer";
 import { Alert } from "react-native";
+import {
+  S3_ENDPOINT,
+  S3_REGION,
+  S3_ACCESS_KEY_ID,
+  S3_SECRET_ACCESS_KEY,
+} from "@env";
 
-// Check if required storage buckets exist
-export const checkStorageBuckets = async () => {
+// Initialize S3 client
+const s3Client = new S3Client({
+  forcePathStyle: true,
+  region: S3_REGION,
+  endpoint: S3_ENDPOINT,
+  credentials: {
+    accessKeyId: S3_ACCESS_KEY_ID,
+    secretAccessKey: S3_SECRET_ACCESS_KEY,
+  },
+});
+
+// Check if bucket exists
+export const checkBucket = async (bucket) => {
   try {
-    console.log("Checking storage buckets...");
-
-    // List all buckets
-    const { data: buckets, error } = await supabase.storage.listBuckets();
-
-    if (error) {
-      console.error("Error listing buckets:", error.message);
-      return {
-        avatarsExists: false,
-        workoutImagesExists: false,
-        profileImagesExists: false,
-        error,
-      };
-    }
-
-    // Check if required buckets exist
-    const avatarsExists = buckets.some((bucket) => bucket.name === "avatars");
-    const workoutImagesExists = buckets.some(
-      (bucket) => bucket.name === "workout-images"
-    );
-    const profileImagesExists = buckets.some(
-      (bucket) => bucket.name === "profile-images"
-    );
-
-    console.log("Storage buckets check results:", {
-      avatarsExists,
-      workoutImagesExists,
-      profileImagesExists,
-      availableBuckets: buckets.map((b) => b.name).join(", "),
-    });
-
-    return {
-      avatarsExists,
-      workoutImagesExists,
-      profileImagesExists,
-      error: null,
-    };
+    console.log(`Checking if bucket exists: ${bucket}`);
+    const command = new HeadBucketCommand({ Bucket: bucket });
+    await s3Client.send(command);
+    return { exists: true, error: null };
   } catch (error) {
-    console.error("Error checking storage buckets:", error.message);
-    return {
-      avatarsExists: false,
-      workoutImagesExists: false,
-      profileImagesExists: false,
-      error,
-    };
+    console.error("Error checking bucket:", error.message);
+    return { exists: false, error };
   }
 };
 
-// Upload a file to Supabase Storage
+// Upload a file to S3
 export const uploadFile = async (
   bucket,
   path,
@@ -62,122 +48,154 @@ export const uploadFile = async (
   contentType = "image/jpeg"
 ) => {
   try {
-    // Check if bucket exists first
-    const { data: buckets, error: bucketsError } =
-      await supabase.storage.listBuckets();
+    console.log(`Starting S3 file upload to bucket: ${bucket}, path: ${path}`);
 
-    if (bucketsError) {
-      console.error("Error listing buckets:", bucketsError.message);
-      return { data: null, error: bucketsError };
-    }
-
-    const bucketExists = buckets.some((b) => b.name === bucket);
-
-    if (!bucketExists) {
-      const error = new Error(
-        `Storage bucket "${bucket}" does not exist. Please set up your Supabase storage buckets.`
-      );
-      console.error(error.message);
-      Alert.alert(
-        "Storage Error",
-        `The storage bucket "${bucket}" is not set up. Please contact the administrator.`
-      );
-      return { data: null, error };
+    // Check if bucket exists
+    const { exists, error: bucketError } = await checkBucket(bucket);
+    if (!exists) {
+      throw new Error(`Bucket "${bucket}" does not exist`);
     }
 
     // Read the file as base64
+    console.log("Reading file as base64...");
     const fileBase64 = await FileSystem.readAsStringAsync(uri, {
       encoding: FileSystem.EncodingType.Base64,
     });
+    console.log("File read successfully");
 
     // Convert base64 to ArrayBuffer
+    console.log("Converting to ArrayBuffer...");
     const fileArrayBuffer = decode(fileBase64);
+    console.log("Conversion successful");
 
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .upload(path, fileArrayBuffer, {
-        contentType,
-        upsert: true,
-      });
+    // Create PutObject command
+    const putCommand = new PutObjectCommand({
+      Bucket: bucket,
+      Key: path,
+      Body: fileArrayBuffer,
+      ContentType: contentType,
+    });
 
-    if (error) {
-      console.error("Error uploading file:", error.message);
-      Alert.alert(
-        "Upload Error",
-        "Failed to upload the file. Please try again later."
+    // Upload using S3 client
+    console.log("Uploading file via S3...");
+    const response = await s3Client.send(putCommand);
+    console.log("S3 upload response:", response);
+
+    if (response.$metadata.httpStatusCode !== 200) {
+      throw new Error(
+        `Upload failed with status ${response.$metadata.httpStatusCode}`
       );
-      return { data: null, error };
     }
 
-    // Get the public URL
-    const {
-      data: { publicUrl },
-    } = supabase.storage.from(bucket).getPublicUrl(path);
+    // Construct the public URL
+    const publicUrl = `${S3_ENDPOINT.replace(
+      "/s3",
+      ""
+    )}/object/public/${bucket}/${path}`;
+    console.log("Public URL constructed:", publicUrl);
 
-    return { data: { ...data, publicUrl }, error: null };
+    return {
+      data: {
+        path,
+        publicUrl,
+      },
+      error: null,
+    };
   } catch (error) {
-    console.error("Error uploading file:", error.message);
-    Alert.alert(
-      "Upload Error",
-      "An unexpected error occurred while uploading the file."
-    );
+    console.error("S3 upload error:", {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+    });
+    Alert.alert("Upload Error", `Failed to upload file: ${error.message}`);
     return { data: null, error };
   }
 };
 
-// Download a file from Supabase Storage
+// Download a file from S3
 export const downloadFile = async (bucket, path, destinationUri) => {
   try {
-    // Get the signed URL for the file
-    const {
-      data: { signedUrl },
-      error: signedUrlError,
-    } = await supabase.storage.from(bucket).createSignedUrl(path, 60); // URL valid for 60 seconds
+    console.log(`Downloading file from S3: ${bucket}/${path}`);
 
-    if (signedUrlError) throw signedUrlError;
+    // Create GetObject command
+    const getCommand = new GetObjectCommand({
+      Bucket: bucket,
+      Key: path,
+    });
 
-    // Download the file using Expo FileSystem
-    const { uri, status } = await FileSystem.downloadAsync(
-      signedUrl,
-      destinationUri
+    // Get the object from S3
+    const response = await s3Client.send(getCommand);
+
+    // Convert the readable stream to a buffer
+    const chunks = [];
+    for await (const chunk of response.Body) {
+      chunks.push(chunk);
+    }
+    const buffer = Buffer.concat(chunks);
+
+    // Write the file to the local filesystem
+    await FileSystem.writeAsStringAsync(
+      destinationUri,
+      buffer.toString("base64"),
+      {
+        encoding: FileSystem.EncodingType.Base64,
+      }
     );
 
-    if (status !== 200) {
-      throw new Error(`Download failed with status ${status}`);
-    }
-
-    return { data: { uri }, error: null };
+    return { data: { uri: destinationUri }, error: null };
   } catch (error) {
     console.error("Error downloading file:", error.message);
+    Alert.alert("Download Error", `Failed to download file: ${error.message}`);
     return { data: null, error };
   }
 };
 
-// Delete a file from Supabase Storage
+// Delete a file from S3
 export const deleteFile = async (bucket, path) => {
   try {
-    const { error } = await supabase.storage.from(bucket).remove([path]);
+    console.log(`Deleting file from S3: ${bucket}/${path}`);
 
-    if (error) throw error;
+    const deleteCommand = new DeleteObjectCommand({
+      Bucket: bucket,
+      Key: path,
+    });
+
+    const response = await s3Client.send(deleteCommand);
+
+    if (response.$metadata.httpStatusCode !== 204) {
+      throw new Error(
+        `Delete failed with status ${response.$metadata.httpStatusCode}`
+      );
+    }
 
     return { error: null };
   } catch (error) {
     console.error("Error deleting file:", error.message);
+    Alert.alert("Delete Error", `Failed to delete file: ${error.message}`);
     return { error };
   }
 };
 
 // List files in a bucket/folder
-export const listFiles = async (bucket, folderPath = "") => {
+export const listFiles = async (bucket, prefix = "") => {
   try {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .list(folderPath);
+    console.log(`Listing files in S3: ${bucket}/${prefix}`);
 
-    if (error) throw error;
+    const listCommand = new ListObjectsCommand({
+      Bucket: bucket,
+      Prefix: prefix,
+    });
 
-    return { data, error: null };
+    const response = await s3Client.send(listCommand);
+
+    const files =
+      response.Contents?.map((item) => ({
+        name: item.Key,
+        size: item.Size,
+        lastModified: item.LastModified,
+      })) || [];
+
+    return { data: files, error: null };
   } catch (error) {
     console.error("Error listing files:", error.message);
     return { data: null, error };

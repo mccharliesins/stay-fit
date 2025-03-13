@@ -1,9 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   StyleSheet,
   Text,
   View,
-  TextInput,
   TouchableOpacity,
   SafeAreaView,
   KeyboardAvoidingView,
@@ -11,113 +10,219 @@ import {
   ActivityIndicator,
   Alert,
   ImageBackground,
+  Linking,
+  Animated,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../../context/AuthContext";
 
 const SignInScreen = ({ navigation }) => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
   const { signIn } = useAuth();
 
-  const handleSignIn = async () => {
-    if (!email || !password) {
-      Alert.alert("Error", "Please fill in all fields");
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const { error } = await signIn({ email, password });
-
-      if (error) {
-        Alert.alert("Error", error.message);
-      }
-    } catch (error) {
-      Alert.alert("Error", error.message);
-    } finally {
-      setIsLoading(false);
-    }
+  // Animation values
+  const fadeAnim = {
+    title: new Animated.Value(0),
+    subtitle: new Animated.Value(0),
+    terms: new Animated.Value(0),
+    buttons: new Animated.Value(0),
   };
 
-  const handleForgotPassword = () => {
-    navigation.navigate("ForgotPassword");
+  const scaleAnim = {
+    createAccount: new Animated.Value(1),
+    signIn: new Animated.Value(1),
   };
 
-  const handleSignUp = () => {
+  useEffect(() => {
+    // Sequence of fade-in animations
+    Animated.stagger(400, [
+      Animated.timing(fadeAnim.title, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim.subtitle, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim.terms, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+      Animated.timing(fadeAnim.buttons, {
+        toValue: 1,
+        duration: 1000,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, []);
+
+  const handleCreateAccount = () => {
     navigation.navigate("SignUp");
+  };
+
+  const handleSignIn = () => {
+    navigation.navigate("SignIn");
+  };
+
+  const handleTermsPress = () => {
+    Linking.openURL("https://stayfit.com/terms");
+  };
+
+  const handlePrivacyPress = () => {
+    Linking.openURL("https://stayfit.com/privacy");
+  };
+
+  const handleCookiesPress = () => {
+    Linking.openURL("https://stayfit.com/cookies");
+  };
+
+  const handlePressIn = (button) => {
+    Animated.spring(scaleAnim[button], {
+      toValue: 0.95,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = (button) => {
+    Animated.spring(scaleAnim[button], {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
   };
 
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar style="light" />
       <ImageBackground
-        source={require("../../../../assets/background.jpg")}
+        source={require("../../../assets/background.jpg")}
         style={styles.backgroundImage}
-        resizeMode="cover"
       >
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : "height"}
-          style={styles.keyboardAvoidingView}
+          style={styles.content}
         >
           <View style={styles.header}>
-            <Text style={styles.title}>StayFit</Text>
-            <Text style={styles.subtitle}>Sign in to your account</Text>
+            <Animated.Text
+              style={[
+                styles.title,
+                {
+                  opacity: fadeAnim.title,
+                  transform: [
+                    {
+                      translateY: fadeAnim.title.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              StayFit
+            </Animated.Text>
+            <Animated.Text
+              style={[
+                styles.subtitle,
+                {
+                  opacity: fadeAnim.subtitle,
+                  transform: [
+                    {
+                      translateY: fadeAnim.subtitle.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
+            >
+              Your fitness journey starts here.
+            </Animated.Text>
           </View>
 
-          <View style={styles.form}>
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoCorrect={false}
-              />
-            </View>
-
-            <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your password"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
-            </View>
-
-            <TouchableOpacity
-              style={styles.forgotPasswordButton}
-              onPress={handleForgotPassword}
+          <View style={styles.footer}>
+            <Animated.Text
+              style={[
+                styles.termsText,
+                {
+                  opacity: fadeAnim.terms,
+                },
+              ]}
             >
-              <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
-            </TouchableOpacity>
+              By tapping 'Sign in' / 'Create account', you agree to our{" "}
+              <Text style={styles.link} onPress={handleTermsPress}>
+                Terms of Service
+              </Text>
+              . Learn how we process your data in our{" "}
+              <Text style={styles.link} onPress={handlePrivacyPress}>
+                Privacy Policy
+              </Text>{" "}
+              and{" "}
+              <Text style={styles.link} onPress={handleCookiesPress}>
+                Cookies Policy
+              </Text>
+              .
+            </Animated.Text>
 
-            <TouchableOpacity
-              style={styles.signInButton}
-              onPress={handleSignIn}
-              disabled={isLoading}
+            <Animated.View
+              style={[
+                {
+                  opacity: fadeAnim.buttons,
+                  transform: [
+                    {
+                      translateY: fadeAnim.buttons.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [20, 0],
+                      }),
+                    },
+                  ],
+                },
+              ]}
             >
-              {isLoading ? (
-                <ActivityIndicator color="#fff" />
-              ) : (
-                <Text style={styles.signInButtonText}>Sign In</Text>
-              )}
-            </TouchableOpacity>
+              <Animated.View
+                style={[
+                  {
+                    transform: [{ scale: scaleAnim.createAccount }],
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.createAccountButton}
+                  onPress={handleCreateAccount}
+                  disabled={isLoading}
+                  onPressIn={() => handlePressIn("createAccount")}
+                  onPressOut={() => handlePressOut("createAccount")}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color="#fff" />
+                  ) : (
+                    <Text style={styles.createAccountButtonText}>
+                      Create account
+                    </Text>
+                  )}
+                </TouchableOpacity>
+              </Animated.View>
 
-            <View style={styles.signUpContainer}>
-              <Text style={styles.signUpText}>Don't have an account?</Text>
-              <TouchableOpacity onPress={handleSignUp}>
-                <Text style={styles.signUpButtonText}>Sign Up</Text>
-              </TouchableOpacity>
-            </View>
+              <Animated.View
+                style={[
+                  {
+                    transform: [{ scale: scaleAnim.signIn }],
+                  },
+                ]}
+              >
+                <TouchableOpacity
+                  style={styles.signInButton}
+                  onPress={handleSignIn}
+                  onPressIn={() => handlePressIn("signIn")}
+                  onPressOut={() => handlePressOut("signIn")}
+                >
+                  <Text style={styles.signInButtonText}>Sign in</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </Animated.View>
           </View>
         </KeyboardAvoidingView>
       </ImageBackground>
@@ -128,85 +233,65 @@ const SignInScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
-  },
-  keyboardAvoidingView: {
-    flex: 1,
-  },
-  header: {
-    alignItems: "center",
-    marginTop: 60,
-    marginBottom: 40,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "bold",
-    color: "#4CAF50",
-    marginBottom: 10,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: "#666",
-  },
-  form: {
-    paddingHorizontal: 20,
-  },
-  inputContainer: {
-    marginBottom: 20,
-  },
-  label: {
-    fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
-    marginBottom: 8,
-  },
-  input: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 15,
-    fontSize: 16,
-    borderWidth: 1,
-    borderColor: "#ddd",
-  },
-  forgotPasswordButton: {
-    alignSelf: "flex-end",
-    marginBottom: 20,
-  },
-  forgotPasswordText: {
-    color: "#4CAF50",
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  signInButton: {
-    backgroundColor: "#4CAF50",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  signInButtonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  signUpContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-    marginTop: 20,
-  },
-  signUpText: {
-    color: "#666",
-    fontSize: 16,
-    marginRight: 5,
-  },
-  signUpButtonText: {
-    color: "#4CAF50",
-    fontSize: 16,
-    fontWeight: "bold",
   },
   backgroundImage: {
     flex: 1,
     resizeMode: "cover",
+  },
+  content: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    justifyContent: "space-between",
+    padding: 24,
+  },
+  header: {
+    alignItems: "center",
+    marginTop: 60,
+  },
+  title: {
+    fontSize: 48,
+    fontWeight: "bold",
+    color: "#fff",
+    marginBottom: 16,
+  },
+  subtitle: {
+    fontSize: 24,
+    color: "#fff",
+    textAlign: "center",
+  },
+  footer: {
+    marginBottom: 32,
+  },
+  termsText: {
+    color: "#fff",
+    fontSize: 14,
+    textAlign: "center",
+    marginBottom: 24,
+    lineHeight: 20,
+  },
+  link: {
+    textDecorationLine: "underline",
+    fontWeight: "bold",
+  },
+  createAccountButton: {
+    backgroundColor: "#7B2CBF",
+    borderRadius: 30,
+    padding: 16,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  createAccountButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "600",
+  },
+  signInButton: {
+    alignItems: "center",
+  },
+  signInButtonText: {
+    color: "white",
+    fontSize: 18,
+    fontWeight: "600",
   },
 });
 
