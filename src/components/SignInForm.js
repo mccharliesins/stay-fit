@@ -43,7 +43,7 @@ const SignInForm = ({ onClose }) => {
     setIsLoading(true);
 
     try {
-      await signIn(email, password);
+      await signIn({ email, password });
       // Navigation will be handled by the AuthContext
     } catch (error) {
       console.error("Sign in error:", error);
