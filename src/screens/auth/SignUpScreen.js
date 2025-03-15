@@ -13,6 +13,13 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { useAuth } from "../../context/AuthContext";
+import { theme } from "../../constants/theme";
+import {
+  useFonts,
+  Poppins_400Regular,
+  Poppins_600SemiBold,
+  Poppins_700Bold,
+} from "@expo-google-fonts/poppins";
 
 const SignUpScreen = ({ navigation }) => {
   const [name, setName] = useState("");
@@ -23,6 +30,12 @@ const SignUpScreen = ({ navigation }) => {
   const [isSignedUp, setIsSignedUp] = useState(false);
   const [error, setError] = useState("");
   const { signUp } = useAuth();
+
+  let [fontsLoaded] = useFonts({
+    Poppins_400Regular,
+    Poppins_600SemiBold,
+    Poppins_700Bold,
+  });
 
   const handleSignUp = async () => {
     if (!email || !password || !confirmPassword) {
@@ -70,9 +83,39 @@ const SignUpScreen = ({ navigation }) => {
     navigation.navigate("SignIn");
   };
 
+  if (!fontsLoaded) {
+    return null;
+  }
+
+  const renderInput = (
+    label,
+    value,
+    onChangeText,
+    placeholder,
+    isPassword = false
+  ) => (
+    <View style={styles.inputContainer}>
+      <Text style={styles.label}>{label}</Text>
+      <TextInput
+        style={styles.input}
+        placeholder={placeholder}
+        value={value}
+        onChangeText={onChangeText}
+        secureTextEntry={isPassword}
+        autoCapitalize={
+          isPassword ? "none" : label === "Email" ? "none" : "words"
+        }
+        autoCorrect={false}
+        keyboardType={label === "Email" ? "email-address" : "default"}
+        editable={!isLoading}
+        placeholderTextColor={theme.secondary}
+      />
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="auto" />
+      <StatusBar style="dark" />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.keyboardAvoidingView}
@@ -86,55 +129,22 @@ const SignUpScreen = ({ navigation }) => {
               </View>
 
               <View style={styles.form}>
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Name</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your name"
-                    value={name}
-                    onChangeText={setName}
-                    autoCorrect={false}
-                    editable={!isLoading}
-                  />
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Email</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your email"
-                    value={email}
-                    onChangeText={setEmail}
-                    keyboardType="email-address"
-                    autoCapitalize="none"
-                    autoCorrect={false}
-                    editable={!isLoading}
-                  />
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Password</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChangeText={setPassword}
-                    secureTextEntry
-                    editable={!isLoading}
-                  />
-                </View>
-
-                <View style={styles.inputContainer}>
-                  <Text style={styles.label}>Confirm Password</Text>
-                  <TextInput
-                    style={styles.input}
-                    placeholder="Confirm your password"
-                    value={confirmPassword}
-                    onChangeText={setConfirmPassword}
-                    secureTextEntry
-                    editable={!isLoading}
-                  />
-                </View>
+                {renderInput("Name", name, setName, "Enter your name")}
+                {renderInput("Email", email, setEmail, "Enter your email")}
+                {renderInput(
+                  "Password",
+                  password,
+                  setPassword,
+                  "Enter your password",
+                  true
+                )}
+                {renderInput(
+                  "Confirm Password",
+                  confirmPassword,
+                  setConfirmPassword,
+                  "Confirm your password",
+                  true
+                )}
 
                 {error ? (
                   <View style={styles.errorContainer}>
@@ -143,23 +153,20 @@ const SignUpScreen = ({ navigation }) => {
                 ) : null}
 
                 <TouchableOpacity
-                  style={[
-                    styles.signUpButton,
-                    isLoading && styles.buttonDisabled,
-                  ]}
+                  style={[styles.button, isLoading && styles.buttonDisabled]}
                   onPress={handleSignUp}
                   disabled={isLoading}
                 >
                   {isLoading ? (
-                    <ActivityIndicator color="#fff" />
+                    <ActivityIndicator color={theme.white} />
                   ) : (
-                    <Text style={styles.signUpButtonText}>Sign Up</Text>
+                    <Text style={styles.buttonText}>Sign Up</Text>
                   )}
                 </TouchableOpacity>
 
                 <View style={styles.signInContainer}>
                   <Text style={styles.signInText}>
-                    Already have an account?
+                    Already have an account?{" "}
                   </Text>
                   <TouchableOpacity onPress={handleSignIn}>
                     <Text style={styles.signInButtonText}>Sign In</Text>
@@ -179,11 +186,8 @@ const SignUpScreen = ({ navigation }) => {
                 activate your account. Once confirmed, you can log in to your
                 account.
               </Text>
-              <TouchableOpacity
-                style={styles.backToSignInButton}
-                onPress={handleSignIn}
-              >
-                <Text style={styles.backToSignInText}>Go to Sign In</Text>
+              <TouchableOpacity style={styles.button} onPress={handleSignIn}>
+                <Text style={styles.buttonText}>Go to Sign In</Text>
               </TouchableOpacity>
             </View>
           )}
@@ -196,7 +200,7 @@ const SignUpScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#f5f5f5",
+    backgroundColor: theme.background,
   },
   keyboardAvoidingView: {
     flex: 1,
@@ -212,116 +216,107 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: 32,
-    fontWeight: "bold",
-    color: "#4A5D32",
-    marginBottom: 10,
+    fontFamily: "Poppins_700Bold",
+    color: theme.primary,
+    marginBottom: 8,
   },
   subtitle: {
     fontSize: 18,
-    color: "#666",
+    fontFamily: "Poppins_400Regular",
+    color: theme.secondary,
   },
   form: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
   },
   inputContainer: {
     marginBottom: 20,
   },
   label: {
     fontSize: 16,
-    fontWeight: "bold",
-    color: "#333",
+    fontFamily: "Poppins_600SemiBold",
+    color: theme.text,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: "white",
-    borderRadius: 10,
-    padding: 15,
+    height: 56,
+    backgroundColor: theme.white,
+    borderRadius: 12,
+    paddingHorizontal: 16,
     fontSize: 16,
+    fontFamily: "Poppins_400Regular",
+    color: theme.text,
     borderWidth: 1,
-    borderColor: "#ddd",
+    borderColor: theme.background,
   },
-  signUpButton: {
-    backgroundColor: "#4A5D32",
-    borderRadius: 10,
-    padding: 15,
+  button: {
+    height: 56,
+    backgroundColor: theme.primary,
+    borderRadius: 12,
+    justifyContent: "center",
     alignItems: "center",
-    marginTop: 10,
-    marginBottom: 20,
+    marginTop: 8,
+    marginBottom: 16,
   },
   buttonDisabled: {
-    backgroundColor: "#7A8B69",
     opacity: 0.7,
   },
-  signUpButtonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
+  buttonText: {
+    color: theme.white,
+    fontSize: 16,
+    fontFamily: "Poppins_600SemiBold",
   },
   errorContainer: {
-    backgroundColor: "#ffebee",
-    padding: 15,
-    borderRadius: 10,
-    marginBottom: 20,
+    backgroundColor: "#FFE5E5",
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 16,
   },
   errorText: {
-    color: "#d32f2f",
+    color: theme.error,
     fontSize: 14,
+    fontFamily: "Poppins_400Regular",
     textAlign: "center",
   },
   signInContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 10,
+    alignItems: "center",
+    marginTop: 8,
   },
   signInText: {
-    color: "#666",
     fontSize: 16,
-    marginRight: 5,
+    fontFamily: "Poppins_400Regular",
+    color: theme.secondary,
   },
   signInButtonText: {
-    color: "#4A5D32",
     fontSize: 16,
-    fontWeight: "bold",
+    fontFamily: "Poppins_600SemiBold",
+    color: theme.primary,
   },
   confirmationContainer: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
     paddingTop: 40,
+    alignItems: "center",
   },
   confirmationTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    color: "#4A5D32",
-    marginBottom: 20,
-    textAlign: "center",
+    fontSize: 24,
+    fontFamily: "Poppins_700Bold",
+    color: theme.primary,
+    marginBottom: 16,
   },
   confirmationText: {
     fontSize: 16,
-    color: "#666",
+    fontFamily: "Poppins_400Regular",
+    color: theme.secondary,
     textAlign: "center",
-    marginBottom: 15,
-    lineHeight: 24,
+    marginBottom: 8,
   },
   emailText: {
     fontSize: 18,
-    fontWeight: "bold",
-    color: "#4A5D32",
-    marginBottom: 20,
-  },
-  backToSignInButton: {
-    backgroundColor: "#4A5D32",
-    borderRadius: 10,
-    padding: 15,
-    alignItems: "center",
-    width: "100%",
-    marginTop: 20,
-  },
-  backToSignInText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
+    fontFamily: "Poppins_600SemiBold",
+    color: theme.text,
+    marginBottom: 16,
   },
 });
 
