@@ -10,7 +10,6 @@ import ProfileScreen from "../screens/ProfileScreen";
 // Import auth screens
 import SignInScreen from "../screens/auth/SignInScreen";
 import SignUpScreen from "../screens/auth/SignUpScreen";
-import ForgotPasswordScreen from "../screens/auth/ForgotPasswordScreen";
 
 // Import auth context
 import { useAuth } from "../context/AuthContext";
@@ -51,10 +50,6 @@ const AppNavigator = () => {
         >
           <Stack.Screen name="SignIn" component={SignInScreen} />
           <Stack.Screen name="SignUp" component={SignUpScreen} />
-          <Stack.Screen
-            name="ForgotPassword"
-            component={ForgotPasswordScreen}
-          />
         </Stack.Navigator>
       )}
     </NavigationContainer>

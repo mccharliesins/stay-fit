@@ -102,19 +102,23 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   // Sign up function
-  const signUp = async ({ email, password, ...userData }) => {
+  const signUp = async ({ email, password, metadata }) => {
     try {
       setLoading(true);
       setNetworkError(null);
 
       console.log("Signing up user:", email);
 
+      if (!email || !password) {
+        throw new Error("Email and password are required");
+      }
+
       // Create the user in Supabase Auth
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: userData, // Store additional user data in the metadata
+          data: metadata || {}, // Include any additional user metadata
         },
       });
 

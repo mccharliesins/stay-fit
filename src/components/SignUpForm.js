@@ -8,6 +8,7 @@ import {
   Animated,
   Keyboard,
   TouchableWithoutFeedback,
+  ActivityIndicator,
 } from "react-native";
 import { useAuth } from "../context/AuthContext";
 
@@ -27,6 +28,8 @@ const SignUpForm = ({ onClose }) => {
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSignedUp, setIsSignedUp] = useState(false);
   const { signUp } = useAuth();
 
   const handleSignUp = async () => {
@@ -39,11 +42,28 @@ const SignUpForm = ({ onClose }) => {
       setError("Passwords do not match");
       return;
     }
+
+    setIsLoading(true);
     try {
-      await signUp(email, password);
-      onClose();
+      const { error } = await signUp({
+        email,
+        password,
+        metadata: {
+          name: email.split("@")[0],
+          created_at: new Date().toISOString(),
+        },
+      });
+
+      if (error) {
+        setError(error.message || "Failed to sign up");
+        return;
+      }
+
+      setIsSignedUp(true);
     } catch (err) {
       setError(err.message || "Failed to sign up");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -56,53 +76,83 @@ const SignUpForm = ({ onClose }) => {
       <View style={styles.container}>
         <View style={styles.overlay} onStartShouldSetResponder={() => true}>
           <View style={styles.formContainer}>
-            <Text style={styles.title}>Create Account</Text>
+            {!isSignedUp ? (
+              <>
+                <Text style={styles.title}>Create Account</Text>
 
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Email"
-                placeholderTextColor="#999"
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Email"
+                    placeholderTextColor="#999"
+                    value={email}
+                    onChangeText={setEmail}
+                    keyboardType="email-address"
+                    autoCapitalize="none"
+                    editable={!isLoading}
+                  />
+                </View>
 
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Password"
-                placeholderTextColor="#999"
-                value={password}
-                onChangeText={setPassword}
-                secureTextEntry
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Password"
+                    placeholderTextColor="#999"
+                    value={password}
+                    onChangeText={setPassword}
+                    secureTextEntry
+                    editable={!isLoading}
+                  />
+                </View>
 
-            <View style={styles.inputContainer}>
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm Password"
-                placeholderTextColor="#999"
-                value={confirmPassword}
-                onChangeText={setConfirmPassword}
-                secureTextEntry
-              />
-            </View>
+                <View style={styles.inputContainer}>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="Confirm Password"
+                    placeholderTextColor="#999"
+                    value={confirmPassword}
+                    onChangeText={setConfirmPassword}
+                    secureTextEntry
+                    editable={!isLoading}
+                  />
+                </View>
 
-            {error ? <Text style={styles.errorText}>{error}</Text> : null}
+                {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-            <TouchableOpacity
-              style={styles.signUpButton}
-              onPress={handleSignUp}
-            >
-              <Text style={styles.signUpButtonText}>Sign up</Text>
-            </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.signUpButton,
+                    isLoading && styles.buttonDisabled,
+                  ]}
+                  onPress={handleSignUp}
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color={theme.white} />
+                  ) : (
+                    <Text style={styles.signUpButtonText}>Sign up</Text>
+                  )}
+                </TouchableOpacity>
+              </>
+            ) : (
+              <View style={styles.confirmationContainer}>
+                <Text style={styles.confirmationTitle}>Almost there!</Text>
+                <Text style={styles.confirmationText}>
+                  We've sent a confirmation email to:
+                </Text>
+                <Text style={styles.emailText}>{email}</Text>
+                <Text style={styles.confirmationText}>
+                  Please check your email and click the confirmation link to
+                  activate your account. Once confirmed, you can log in to your
+                  account.
+                </Text>
+              </View>
+            )}
 
             <TouchableOpacity style={styles.cancelButton} onPress={onClose}>
-              <Text style={styles.cancelButtonText}>Cancel</Text>
+              <Text style={styles.cancelButtonText}>
+                {isSignedUp ? "Back to Home" : "Cancel"}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -159,6 +209,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
+  buttonDisabled: {
+    backgroundColor: theme.secondary,
+    opacity: 0.7,
+  },
   signUpButtonText: {
     color: theme.white,
     fontSize: 16,
@@ -173,6 +227,30 @@ const styles = StyleSheet.create({
     color: theme.text,
     fontSize: 16,
     fontWeight: "500",
+  },
+  confirmationContainer: {
+    alignItems: "center",
+    paddingVertical: 20,
+  },
+  confirmationTitle: {
+    fontSize: 24,
+    fontWeight: "700",
+    color: theme.primary,
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  confirmationText: {
+    fontSize: 16,
+    color: theme.text,
+    textAlign: "center",
+    marginBottom: 12,
+    lineHeight: 22,
+  },
+  emailText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: theme.primary,
+    marginBottom: 12,
   },
 });
 
