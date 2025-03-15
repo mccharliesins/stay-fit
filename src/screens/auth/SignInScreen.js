@@ -10,32 +10,39 @@ import {
   Modal,
   Dimensions,
   PanResponder,
-  Platform,
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
-import { useAuth } from "../../context/AuthContext";
-import SignInForm from "../../components/SignInForm";
-import SignUpForm from "../../components/SignUpForm";
 import {
   useFonts,
   Poppins_400Regular,
   Poppins_600SemiBold,
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
+import SignInForm from "../../components/SignInForm";
+import SignUpForm from "../../components/SignUpForm";
+import { theme, fonts } from "../../constants/theme";
 
-const { width, height } = Dimensions.get("window");
+const { width } = Dimensions.get("window");
 
-// Theme colors
-const theme = {
-  primary: "#4A5D32", // Olive green
-  secondary: "#7A8B69", // Lighter olive
-  accent: "#D4E6B5", // Very light olive/sage
-  text: "#1A1E13", // Dark olive, almost black
-  background: "#F5F7F2", // Off-white with slight green tint
-  white: "#FFFFFF",
-};
+const slides = [
+  {
+    title: "READY TO START",
+    subtitle: "YOUR FITNESS",
+    emphasis: "JOURNEY?",
+  },
+  {
+    title: "TRACK YOUR",
+    subtitle: "WORKOUTS WITH",
+    emphasis: "CONFIDENCE",
+  },
+  {
+    title: "JOIN THE",
+    subtitle: "STAYFIT",
+    emphasis: "COMMUNITY",
+  },
+];
 
-function SignInScreen({ navigation }) {
+function SignInScreen() {
   const [showSignInForm, setShowSignInForm] = useState(false);
   const [showSignUpForm, setShowSignUpForm] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -47,24 +54,6 @@ function SignInScreen({ navigation }) {
     Poppins_600SemiBold,
     Poppins_700Bold,
   });
-
-  const slides = [
-    {
-      title: "READY TO START",
-      subtitle: "YOUR FITNESS",
-      emphasis: "JOURNEY?",
-    },
-    {
-      title: "TRACK YOUR",
-      subtitle: "WORKOUTS WITH",
-      emphasis: "CONFIDENCE",
-    },
-    {
-      title: "JOIN THE",
-      subtitle: "STAYFIT",
-      emphasis: "COMMUNITY",
-    },
-  ];
 
   const panResponder = useRef(
     PanResponder.create({
@@ -93,17 +82,20 @@ function SignInScreen({ navigation }) {
           }
         }
 
-        Animated.spring(slideAnim, {
-          toValue: -newIndex * width,
-          useNativeDriver: true,
-          friction: 8,
-          tension: 40,
-        }).start();
-
-        setCurrentSlide(newIndex);
+        animateToSlide(newIndex);
       },
     })
   ).current;
+
+  const animateToSlide = (index) => {
+    Animated.spring(slideAnim, {
+      toValue: -index * width,
+      useNativeDriver: true,
+      friction: 8,
+      tension: 40,
+    }).start();
+    setCurrentSlide(index);
+  };
 
   useEffect(() => {
     // Initial buttons fade in
@@ -116,33 +108,11 @@ function SignInScreen({ navigation }) {
     // Auto-advance slides
     const interval = setInterval(() => {
       const nextSlide = (currentSlide + 1) % slides.length;
-      setCurrentSlide(nextSlide);
-      Animated.spring(slideAnim, {
-        toValue: -nextSlide * width,
-        useNativeDriver: true,
-        friction: 8,
-        tension: 40,
-      }).start();
+      animateToSlide(nextSlide);
     }, 4000);
 
     return () => clearInterval(interval);
   }, [currentSlide]);
-
-  const handleCreateAccount = () => {
-    setShowSignUpForm(true);
-  };
-
-  const handleSignIn = () => {
-    setShowSignInForm(true);
-  };
-
-  const handleCloseSignInForm = () => {
-    setShowSignInForm(false);
-  };
-
-  const handleCloseSignUpForm = () => {
-    setShowSignUpForm(false);
-  };
 
   if (!fontsLoaded) {
     return null;
@@ -212,12 +182,15 @@ function SignInScreen({ navigation }) {
           >
             <TouchableOpacity
               style={styles.signUpButton}
-              onPress={handleCreateAccount}
+              onPress={() => setShowSignUpForm(true)}
             >
               <Text style={styles.signUpButtonText}>Sign up</Text>
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.logInButton} onPress={handleSignIn}>
+            <TouchableOpacity
+              style={styles.logInButton}
+              onPress={() => setShowSignInForm(true)}
+            >
               <Text style={styles.logInButtonText}>Log in</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -227,18 +200,18 @@ function SignInScreen({ navigation }) {
           visible={showSignInForm}
           transparent
           animationType="slide"
-          onRequestClose={handleCloseSignInForm}
+          onRequestClose={() => setShowSignInForm(false)}
         >
-          <SignInForm onClose={handleCloseSignInForm} />
+          <SignInForm onClose={() => setShowSignInForm(false)} />
         </Modal>
 
         <Modal
           visible={showSignUpForm}
           transparent
           animationType="slide"
-          onRequestClose={handleCloseSignUpForm}
+          onRequestClose={() => setShowSignUpForm(false)}
         >
-          <SignUpForm onClose={handleCloseSignUpForm} />
+          <SignUpForm onClose={() => setShowSignUpForm(false)} />
         </Modal>
       </ImageBackground>
     </SafeAreaView>
@@ -248,117 +221,95 @@ function SignInScreen({ navigation }) {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.background,
-    padding: 0,
   },
   backgroundImage: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
+    flex: 1,
     width: "100%",
-    height: "100%",
-    resizeMode: "cover",
   },
   overlay: {
     flex: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.5)",
-    paddingHorizontal: 24,
-    paddingTop: Platform.OS === "ios" ? 50 : 24,
-    paddingBottom: Platform.OS === "ios" ? 34 : 24,
-    justifyContent: "space-between",
+    backgroundColor: "rgba(0, 0, 0, 0.4)",
+    paddingTop: 48,
   },
   header: {
-    alignItems: "flex-start",
-    marginTop: 20,
+    paddingHorizontal: 24,
   },
   logo: {
     fontSize: 32,
-    fontWeight: "bold",
-    color: theme.white,
     fontFamily: "Poppins_700Bold",
+    color: theme.white,
   },
   content: {
     flex: 1,
-    overflow: "hidden",
+    justifyContent: "center",
   },
   slidesContainer: {
     flexDirection: "row",
-    width: width * 3, // Number of slides
+    width: width * slides.length,
   },
   slide: {
-    width: width,
+    width,
     paddingHorizontal: 24,
-    justifyContent: "center",
   },
   titleContainer: {
-    marginBottom: 40,
+    alignItems: "flex-start",
   },
   title: {
-    fontSize: 32,
+    fontSize: 40,
+    fontFamily: "Poppins_700Bold",
     color: theme.white,
     marginBottom: 8,
-    letterSpacing: 1,
-    fontFamily: "Poppins_700Bold",
   },
   subtitle: {
-    fontSize: 32,
+    fontSize: 40,
+    fontFamily: "Poppins_700Bold",
     color: theme.white,
     marginBottom: 8,
-    letterSpacing: 1,
-    fontFamily: "Poppins_700Bold",
   },
   emphasis: {
-    fontSize: 32,
-    color: theme.accent,
-    letterSpacing: 1,
+    fontSize: 40,
     fontFamily: "Poppins_700Bold",
+    color: theme.accent,
   },
   dotsContainer: {
     flexDirection: "row",
     justifyContent: "center",
-    marginTop: 40,
-    position: "absolute",
-    bottom: 20,
-    left: 0,
-    right: 0,
+    marginTop: 32,
   },
   dot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: "rgba(255, 255, 255, 0.4)",
+    backgroundColor: "rgba(255, 255, 255, 0.5)",
     marginHorizontal: 4,
   },
   activeDot: {
     backgroundColor: theme.white,
-    width: 24,
   },
   buttonContainer: {
-    marginTop: 40,
-    paddingHorizontal: 16,
-    marginBottom: Platform.OS === "ios" ? 20 : 16,
+    padding: 24,
+    paddingBottom: 48,
   },
   signUpButton: {
-    backgroundColor: theme.white,
-    borderRadius: 30,
+    backgroundColor: theme.primary,
     height: 56,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 16,
   },
   signUpButtonText: {
-    color: theme.text,
+    color: theme.white,
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
   },
   logInButton: {
-    borderRadius: 30,
+    backgroundColor: "transparent",
     height: 56,
+    borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
-    borderWidth: 1,
+    borderWidth: 2,
     borderColor: theme.white,
   },
   logInButtonText: {
