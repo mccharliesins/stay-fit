@@ -19,8 +19,10 @@ import {
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
 import { theme } from "../../constants/theme";
+import CustomStatusBar from "../../components/CustomStatusBar";
 
-const INVITE_CODE_LENGTH = 6;
+const INVITE_CODE_LENGTH = 8;
+const VALID_INVITE_CODES = ["11111111"]; // Add more codes as needed
 
 const InviteCodeScreen = ({ navigation }) => {
   const [inviteCode, setInviteCode] = useState("");
@@ -50,11 +52,11 @@ const InviteCodeScreen = ({ navigation }) => {
     setError("");
 
     try {
-      // TODO: Replace with actual API call to validate invite code
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Simulate API call delay
+      await new Promise((resolve) => setTimeout(resolve, 800));
 
-      // Simulate validation (replace with actual validation)
-      const isValidCode = code === "123456";
+      // Check if code is in valid codes list
+      const isValidCode = VALID_INVITE_CODES.includes(code);
 
       if (isValidCode) {
         setIsValid(true);
@@ -110,15 +112,24 @@ const InviteCodeScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar style="dark" />
+      <CustomStatusBar
+        backgroundColor={theme.background}
+        barStyle="dark-content"
+      />
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : "height"}
         style={styles.content}
       >
         <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backButtonText}>← Back</Text>
+          </TouchableOpacity>
           <Text style={styles.title}>Enter Invite Code</Text>
           <Text style={styles.subtitle}>
-            Please enter the invite code you received
+            Please enter the 8-digit invite code you received
           </Text>
         </View>
 
@@ -134,11 +145,11 @@ const InviteCodeScreen = ({ navigation }) => {
               isValid && styles.validInput,
               error && styles.errorInput,
             ]}
-            placeholder="Enter 6-digit code"
+            placeholder="Enter 8-digit code"
             value={inviteCode}
-            onChangeText={(text) => setInviteCode(text.toUpperCase())}
+            onChangeText={(text) => setInviteCode(text.replace(/[^0-9]/g, ""))}
             maxLength={INVITE_CODE_LENGTH}
-            autoCapitalize="characters"
+            keyboardType="numeric"
             autoCorrect={false}
             editable={!isLoading}
             placeholderTextColor={theme.secondary}
@@ -153,7 +164,7 @@ const InviteCodeScreen = ({ navigation }) => {
             <Text style={styles.errorText}>{error}</Text>
           ) : (
             <Text style={styles.helperText}>
-              {inviteCode.length}/{INVITE_CODE_LENGTH} characters
+              {inviteCode.length}/{INVITE_CODE_LENGTH} digits
             </Text>
           )}
         </Animated.View>
@@ -164,14 +175,11 @@ const InviteCodeScreen = ({ navigation }) => {
             onPress={handleContinue}
             disabled={!isValid}
           >
-            <Text style={styles.buttonText}>Continue</Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
-            <Text style={styles.backButtonText}>Go Back</Text>
+            <Text
+              style={[styles.buttonText, !isValid && styles.buttonTextDisabled]}
+            >
+              {isValid ? "Continue" : "Enter Valid Code"}
+            </Text>
           </TouchableOpacity>
         </View>
       </KeyboardAvoidingView>
@@ -187,11 +195,18 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     padding: 24,
-    justifyContent: "center",
   },
   header: {
-    alignItems: "center",
-    marginBottom: 32,
+    marginTop: 20,
+    marginBottom: 40,
+  },
+  backButton: {
+    marginBottom: 24,
+  },
+  backButtonText: {
+    fontSize: 16,
+    fontFamily: "Poppins_600SemiBold",
+    color: theme.primary,
   },
   title: {
     fontSize: 24,
@@ -203,7 +218,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontFamily: "Poppins_400Regular",
     color: theme.secondary,
-    textAlign: "center",
   },
   inputContainer: {
     marginBottom: 32,
@@ -213,13 +227,21 @@ const styles = StyleSheet.create({
     backgroundColor: theme.white,
     borderRadius: 12,
     paddingHorizontal: 16,
-    fontSize: 20,
+    fontSize: 24,
     fontFamily: "Poppins_600SemiBold",
     color: theme.text,
     textAlign: "center",
-    letterSpacing: 8,
+    letterSpacing: 12,
     borderWidth: 2,
-    borderColor: theme.background,
+    borderColor: "transparent",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3,
+    elevation: 3,
   },
   validInput: {
     borderColor: "#4CAF50",
@@ -247,7 +269,8 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   buttonContainer: {
-    gap: 16,
+    marginTop: "auto",
+    marginBottom: 24,
   },
   button: {
     height: 56,
@@ -255,24 +278,26 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     justifyContent: "center",
     alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
   buttonDisabled: {
-    opacity: 0.7,
+    backgroundColor: theme.secondary,
+    opacity: 0.5,
   },
   buttonText: {
     color: theme.white,
     fontSize: 16,
     fontFamily: "Poppins_600SemiBold",
   },
-  backButton: {
-    height: 56,
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  backButtonText: {
-    color: theme.secondary,
-    fontSize: 16,
-    fontFamily: "Poppins_600SemiBold",
+  buttonTextDisabled: {
+    opacity: 0.8,
   },
 });
 
