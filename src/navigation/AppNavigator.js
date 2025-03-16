@@ -1,6 +1,7 @@
 import React from "react";
 import { NavigationContainer } from "@react-navigation/native";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
+import { useAuth } from "../hooks/useAuth";
 
 // Import screens
 import HomeScreen from "../screens/HomeScreen";
@@ -25,82 +26,38 @@ import DailyReminderScreen from "../screens/onboarding/walkthrough/DailyReminder
 import ProfileVisibilityScreen from "../screens/onboarding/walkthrough/ProfileVisibilityScreen";
 import SubscriptionScreen from "../screens/onboarding/walkthrough/SubscriptionScreen";
 import SuccessScreen from "../screens/onboarding/walkthrough/SuccessScreen";
-
-// Import auth context
-import { useAuth } from "../context/AuthContext";
+import WalkthroughScreen from "../screens/onboarding/walkthrough/WalkthroughScreen";
 
 const Stack = createNativeStackNavigator();
 
 const AppNavigator = () => {
-  const { user, loading } = useAuth();
-
-  // Show a loading screen while checking authentication
-  if (loading) {
-    return null; // You could replace this with a loading spinner
-  }
+  const { user } = useAuth();
 
   return (
     <NavigationContainer>
-      {user ? (
-        // Check if user has completed onboarding
-        user.onboarding_completed ? (
-          // Main app screens
-          <Stack.Navigator
-            initialRouteName="Home"
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: "#f5f5f5" },
-            }}
-          >
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          animation: "slide_from_right",
+        }}
+      >
+        {user ? (
+          // Authenticated stack
+          <Stack.Group>
             <Stack.Screen name="Home" component={HomeScreen} />
             <Stack.Screen name="Workouts" component={WorkoutsScreen} />
             <Stack.Screen name="Profile" component={ProfileScreen} />
-          </Stack.Navigator>
+          </Stack.Group>
         ) : (
-          // Onboarding walkthrough screens
-          <Stack.Navigator
-            initialRouteName="Welcome"
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: "#f5f5f5" },
-              gestureEnabled: false, // Prevent back swipe during onboarding
-            }}
-          >
-            <Stack.Screen name="Welcome" component={WelcomeScreen} />
-            <Stack.Screen name="FitnessGoal" component={FitnessGoalScreen} />
-            <Stack.Screen name="BasicDetails" component={BasicDetailsScreen} />
-            <Stack.Screen
-              name="WorkoutPreference"
-              component={WorkoutPreferenceScreen}
-            />
-            <Stack.Screen
-              name="DailyReminder"
-              component={DailyReminderScreen}
-            />
-            <Stack.Screen
-              name="ProfileVisibility"
-              component={ProfileVisibilityScreen}
-            />
-            <Stack.Screen name="Subscription" component={SubscriptionScreen} />
-            <Stack.Screen name="Success" component={SuccessScreen} />
-          </Stack.Navigator>
-        )
-      ) : (
-        // Entry and auth screens
-        <Stack.Navigator
-          initialRouteName="Entry"
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: "#f5f5f5" },
-          }}
-        >
-          <Stack.Screen name="Entry" component={EntryScreen} />
-          <Stack.Screen name="SignIn" component={SignInScreen} />
-          <Stack.Screen name="SignUp" component={SignUpScreen} />
-          <Stack.Screen name="InviteCode" component={InviteCodeScreen} />
-          <Stack.Screen name="Waitlist" component={WaitlistScreen} />
-        </Stack.Navigator>
-      )}
+          // Public stack
+          <Stack.Group>
+            <Stack.Screen name="Entry" component={EntryScreen} />
+            <Stack.Screen name="InviteCode" component={InviteCodeScreen} />
+            <Stack.Screen name="Waitlist" component={WaitlistScreen} />
+            <Stack.Screen name="Walkthrough" component={WalkthroughScreen} />
+          </Stack.Group>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 };

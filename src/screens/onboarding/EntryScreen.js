@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   StyleSheet,
   Text,
@@ -17,10 +17,17 @@ import {
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
 import { theme } from "../../constants/theme";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useTheme } from "../../hooks/useTheme";
+import AuthModal from "../../components/auth/AuthModal";
 
 const { width } = Dimensions.get("window");
 
 const EntryScreen = ({ navigation }) => {
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const insets = useSafeAreaInsets();
+  const theme = useTheme();
+
   let [fontsLoaded] = useFonts({
     Poppins_400Regular,
     Poppins_600SemiBold,
@@ -31,62 +38,78 @@ const EntryScreen = ({ navigation }) => {
     return null;
   }
 
-  const renderButton = (text, onPress, style, textStyle) => (
+  const handleAuthSuccess = () => {
+    setShowAuthModal(false);
+    navigation.replace("Home");
+  };
+
+  const renderButton = (text, onPress, isPrimary = false) => (
     <TouchableOpacity
-      style={[styles.button, style]}
+      style={[
+        styles.button,
+        {
+          backgroundColor: isPrimary ? theme.primary : "transparent",
+          borderWidth: isPrimary ? 0 : 2,
+          borderColor: theme.primary,
+        },
+      ]}
       onPress={onPress}
-      activeOpacity={0.8}
     >
-      <Text style={[styles.buttonText, textStyle]}>{text}</Text>
+      <Text
+        style={[
+          styles.buttonText,
+          { color: isPrimary ? "white" : theme.primary },
+        ]}
+      >
+        {text}
+      </Text>
     </TouchableOpacity>
   );
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar style="light" />
+    <SafeAreaView
+      style={[styles.container, { backgroundColor: theme.background }]}
+    >
+      <StatusBar barStyle="light-content" />
       <ImageBackground
-        source={require("../../../assets/background.jpg")}
+        source={require("../../../assets/images/welcome-bg.jpg")}
         style={styles.backgroundImage}
+        resizeMode="cover"
       >
-        <View style={styles.overlay}>
-          <View style={styles.header}>
-            <Text style={styles.logo}>SF</Text>
-            <Text style={styles.title}>Welcome to StayFit</Text>
-            <Text style={styles.subtitle}>
-              Your exclusive fitness companion awaits
-            </Text>
-          </View>
+        <View style={[styles.overlay, { paddingTop: insets.top }]}>
+          <View style={styles.content}>
+            <View style={styles.header}>
+              <Text style={styles.title}>StayFit</Text>
+              <Text style={styles.subtitle}>
+                Your Personal Fitness Journey Starts Here
+              </Text>
+            </View>
 
-          <View style={styles.buttonContainer}>
-            {renderButton(
-              "Already a User? Sign In",
-              () => navigation.navigate("SignIn"),
-              styles.signInButton,
-              styles.signInButtonText
-            )}
+            <View style={styles.buttonContainer}>
+              {renderButton("Join with Invite Code", () =>
+                navigation.navigate("InviteCode")
+              )}
+              {renderButton("Join Waitlist", () =>
+                navigation.navigate("Waitlist")
+              )}
+              {renderButton("Already a user? Sign in", () =>
+                setShowAuthModal(true)
+              )}
+            </View>
 
-            {renderButton(
-              "Got an Invite Code? Join Now",
-              () => navigation.navigate("InviteCode"),
-              styles.inviteButton,
-              styles.inviteButtonText
-            )}
-
-            {renderButton(
-              "No Invite? Join the Waitlist",
-              () => navigation.navigate("Waitlist"),
-              styles.waitlistButton,
-              styles.waitlistButtonText
-            )}
-          </View>
-
-          <View style={styles.footer}>
-            <Text style={styles.footerText}>
-              Join the exclusive community of fitness enthusiasts
+            <Text style={styles.footer}>
+              By continuing, you agree to our Terms of Service and Privacy
+              Policy
             </Text>
           </View>
         </View>
       </ImageBackground>
+
+      <AuthModal
+        isVisible={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        onSuccess={handleAuthSuccess}
+      />
     </SafeAreaView>
   );
 };
@@ -97,90 +120,50 @@ const styles = StyleSheet.create({
   },
   backgroundImage: {
     flex: 1,
-    width: "100%",
   },
   overlay: {
     flex: 1,
     backgroundColor: "rgba(0, 0, 0, 0.4)",
-    paddingTop: 48,
+  },
+  content: {
+    flex: 1,
     justifyContent: "space-between",
+    padding: 24,
   },
   header: {
-    paddingHorizontal: 24,
-    alignItems: "center",
-  },
-  logo: {
-    fontSize: 48,
-    fontFamily: "Poppins_700Bold",
-    color: theme.white,
-    marginBottom: 24,
+    marginTop: "20%",
   },
   title: {
-    fontSize: 32,
-    fontFamily: "Poppins_700Bold",
-    color: theme.white,
-    marginBottom: 8,
+    fontSize: 48,
+    fontWeight: "bold",
+    color: "white",
     textAlign: "center",
   },
   subtitle: {
-    fontSize: 16,
-    fontFamily: "Poppins_400Regular",
-    color: theme.white,
-    opacity: 0.9,
+    fontSize: 18,
+    color: "white",
     textAlign: "center",
+    marginTop: 8,
+    opacity: 0.9,
   },
   buttonContainer: {
-    padding: 24,
     gap: 16,
   },
   button: {
     height: 56,
     borderRadius: 12,
-    justifyContent: "center",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
+    justifyContent: "center",
   },
   buttonText: {
     fontSize: 16,
-    fontFamily: "Poppins_600SemiBold",
-  },
-  signInButton: {
-    backgroundColor: theme.white,
-  },
-  signInButtonText: {
-    color: theme.primary,
-  },
-  inviteButton: {
-    backgroundColor: theme.primary,
-  },
-  inviteButtonText: {
-    color: theme.white,
-  },
-  waitlistButton: {
-    backgroundColor: "transparent",
-    borderWidth: 2,
-    borderColor: theme.white,
-  },
-  waitlistButtonText: {
-    color: theme.white,
+    fontWeight: "600",
   },
   footer: {
-    padding: 24,
-    alignItems: "center",
-  },
-  footerText: {
-    fontSize: 14,
-    fontFamily: "Poppins_400Regular",
-    color: theme.white,
-    opacity: 0.8,
+    color: "white",
     textAlign: "center",
+    opacity: 0.7,
+    marginTop: 24,
   },
 });
 
