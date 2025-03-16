@@ -31,6 +31,60 @@ import { useAuth } from "../context/AuthContext";
 
 const Stack = createNativeStackNavigator();
 
+// Create separate stacks for better organization
+const MainStack = createNativeStackNavigator();
+const AuthStack = createNativeStackNavigator();
+const WalkthroughStack = createNativeStackNavigator();
+
+const MainNavigator = () => (
+  <MainStack.Navigator
+    initialRouteName="Home"
+    screenOptions={{
+      headerShown: false,
+      contentStyle: { backgroundColor: "#f5f5f5" },
+    }}
+  >
+    <MainStack.Screen name="Home" component={HomeScreen} />
+    <MainStack.Screen name="Workouts" component={WorkoutsScreen} />
+    <MainStack.Screen name="Profile" component={ProfileScreen} />
+  </MainStack.Navigator>
+);
+
+const WalkthroughNavigator = () => (
+  <WalkthroughStack.Navigator
+    initialRouteName="Welcome"
+    screenOptions={{
+      headerShown: false,
+      contentStyle: { backgroundColor: "#f5f5f5" },
+      gestureEnabled: false,
+    }}
+  >
+    <WalkthroughStack.Screen name="Welcome" component={WelcomeScreen} />
+    <WalkthroughStack.Screen name="FitnessGoal" component={FitnessGoalScreen} />
+    <WalkthroughStack.Screen
+      name="BasicDetails"
+      component={BasicDetailsScreen}
+    />
+    <WalkthroughStack.Screen
+      name="WorkoutPreference"
+      component={WorkoutPreferenceScreen}
+    />
+    <WalkthroughStack.Screen
+      name="DailyReminder"
+      component={DailyReminderScreen}
+    />
+    <WalkthroughStack.Screen
+      name="ProfileVisibility"
+      component={ProfileVisibilityScreen}
+    />
+    <WalkthroughStack.Screen
+      name="Subscription"
+      component={SubscriptionScreen}
+    />
+    <WalkthroughStack.Screen name="Success" component={SuccessScreen} />
+  </WalkthroughStack.Navigator>
+);
+
 const AppNavigator = () => {
   const { user, loading } = useAuth();
 
@@ -41,66 +95,31 @@ const AppNavigator = () => {
 
   return (
     <NavigationContainer>
-      {user ? (
-        // Check if user has completed onboarding
-        user.onboarding_completed ? (
-          // Main app screens
-          <Stack.Navigator
-            initialRouteName="Home"
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: "#f5f5f5" },
-            }}
-          >
-            <Stack.Screen name="Home" component={HomeScreen} />
-            <Stack.Screen name="Workouts" component={WorkoutsScreen} />
-            <Stack.Screen name="Profile" component={ProfileScreen} />
-          </Stack.Navigator>
+      <Stack.Navigator
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: "#f5f5f5" },
+        }}
+      >
+        {user ? (
+          // Check if user has completed onboarding
+          user.onboarding_completed ? (
+            <Stack.Screen name="MainApp" component={MainNavigator} />
+          ) : (
+            <Stack.Screen name="Walkthrough" component={WalkthroughNavigator} />
+          )
         ) : (
-          // Onboarding walkthrough screens
-          <Stack.Navigator
-            initialRouteName="Welcome"
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: "#f5f5f5" },
-              gestureEnabled: false, // Prevent back swipe during onboarding
-            }}
-          >
-            <Stack.Screen name="Welcome" component={WelcomeScreen} />
-            <Stack.Screen name="FitnessGoal" component={FitnessGoalScreen} />
-            <Stack.Screen name="BasicDetails" component={BasicDetailsScreen} />
-            <Stack.Screen
-              name="WorkoutPreference"
-              component={WorkoutPreferenceScreen}
-            />
-            <Stack.Screen
-              name="DailyReminder"
-              component={DailyReminderScreen}
-            />
-            <Stack.Screen
-              name="ProfileVisibility"
-              component={ProfileVisibilityScreen}
-            />
-            <Stack.Screen name="Subscription" component={SubscriptionScreen} />
-            <Stack.Screen name="Success" component={SuccessScreen} />
-          </Stack.Navigator>
-        )
-      ) : (
-        // Entry and auth screens
-        <Stack.Navigator
-          initialRouteName="Entry"
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: "#f5f5f5" },
-          }}
-        >
-          <Stack.Screen name="Entry" component={EntryScreen} />
-          <Stack.Screen name="SignIn" component={SignInScreen} />
-          <Stack.Screen name="SignUp" component={SignUpScreen} />
-          <Stack.Screen name="InviteCode" component={InviteCodeScreen} />
-          <Stack.Screen name="Waitlist" component={WaitlistScreen} />
-        </Stack.Navigator>
-      )}
+          // Entry and auth screens
+          <>
+            <Stack.Screen name="Entry" component={EntryScreen} />
+            <Stack.Screen name="SignIn" component={SignInScreen} />
+            <Stack.Screen name="SignUp" component={SignUpScreen} />
+            <Stack.Screen name="InviteCode" component={InviteCodeScreen} />
+            <Stack.Screen name="Waitlist" component={WaitlistScreen} />
+            <Stack.Screen name="Walkthrough" component={WalkthroughNavigator} />
+          </>
+        )}
+      </Stack.Navigator>
     </NavigationContainer>
   );
 };

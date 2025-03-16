@@ -102,7 +102,10 @@ const InviteCodeScreen = ({ navigation }) => {
 
   const handleContinue = () => {
     if (isValid) {
-      navigation.navigate("Walkthrough", { inviteCode });
+      navigation.navigate("Walkthrough", {
+        screen: "Welcome",
+        params: { inviteCode },
+      });
     }
   };
 
