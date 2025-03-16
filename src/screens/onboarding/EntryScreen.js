@@ -6,8 +6,6 @@ import {
   TouchableOpacity,
   SafeAreaView,
   ImageBackground,
-  Animated,
-  Dimensions,
   StatusBar,
 } from "react-native";
 import {
@@ -16,12 +14,9 @@ import {
   Poppins_600SemiBold,
   Poppins_700Bold,
 } from "@expo-google-fonts/poppins";
-import { theme } from "../../constants/theme";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useTheme } from "../../hooks/useTheme";
 import AuthModal from "../../components/auth/AuthModal";
-
-const { width } = Dimensions.get("window");
 
 const EntryScreen = ({ navigation }) => {
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -138,6 +133,7 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     color: "white",
     textAlign: "center",
+    fontFamily: "Poppins_700Bold",
   },
   subtitle: {
     fontSize: 18,
@@ -145,6 +141,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     marginTop: 8,
     opacity: 0.9,
+    fontFamily: "Poppins_400Regular",
   },
   buttonContainer: {
     gap: 16,
@@ -158,12 +155,14 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: "600",
+    fontFamily: "Poppins_600SemiBold",
   },
   footer: {
     color: "white",
     textAlign: "center",
     opacity: 0.7,
     marginTop: 24,
+    fontFamily: "Poppins_400Regular",
   },
 });
 
