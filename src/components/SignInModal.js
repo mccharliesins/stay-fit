@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   Modal,
   View,
@@ -15,6 +15,7 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { theme } from "../constants/theme";
 import { supabase } from "../services/supabase";
+import LottieView from "lottie-react-native";
 import {
   Poppins_400Regular,
   Poppins_600SemiBold,
@@ -27,6 +28,25 @@ const SignInModal = ({ visible, onClose, onSuccess }) => {
   const [showPassword, setShowPassword] = useState(false);
   const [isResetMode, setIsResetMode] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+
+  const loadingAnimation = useRef(null);
+
+  useEffect(() => {
+    let interval;
+    if (resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((current) => current - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [resendTimer]);
+
+  useEffect(() => {
+    if (loading && loadingAnimation.current) {
+      loadingAnimation.current.play();
+    }
+  }, [loading]);
 
   const handleSignIn = async () => {
     if (!email || !password) {
@@ -66,6 +86,7 @@ const SignInModal = ({ visible, onClose, onSuccess }) => {
       if (error) throw error;
 
       setResetSent(true);
+      setResendTimer(60); // Start 60 second timer
     } catch (error) {
       Alert.alert("Error", error.message);
     } finally {
@@ -110,6 +131,22 @@ const SignInModal = ({ visible, onClose, onSuccess }) => {
     </View>
   );
 
+  const renderLoadingAnimation = (color = theme.white, size = 40) => (
+    <LottieView
+      ref={loadingAnimation}
+      source={require("../../assets/animations/loading.json")}
+      style={{ width: size, height: size }}
+      autoPlay
+      loop
+      colorFilters={[
+        {
+          keypath: "Shape Layer 1",
+          color: color,
+        },
+      ]}
+    />
+  );
+
   const renderSignInView = () => (
     <>
       <Text style={styles.title}>Welcome Back!</Text>
@@ -134,7 +171,7 @@ const SignInModal = ({ visible, onClose, onSuccess }) => {
         disabled={loading}
       >
         {loading ? (
-          <ActivityIndicator color={theme.white} />
+          renderLoadingAnimation()
         ) : (
           <Text style={styles.signInButtonText}>Sign In</Text>
         )}
@@ -149,6 +186,7 @@ const SignInModal = ({ visible, onClose, onSuccess }) => {
         onPress={() => {
           setIsResetMode(false);
           setResetSent(false);
+          setResendTimer(0);
         }}
       >
         <Ionicons name="arrow-back" size={24} color={theme.text} />
@@ -171,7 +209,7 @@ const SignInModal = ({ visible, onClose, onSuccess }) => {
             disabled={loading}
           >
             {loading ? (
-              <ActivityIndicator color={theme.white} />
+              renderLoadingAnimation()
             ) : (
               <Text style={styles.signInButtonText}>Send Reset Link</Text>
             )}
@@ -181,19 +219,36 @@ const SignInModal = ({ visible, onClose, onSuccess }) => {
 
       {resetSent && (
         <View style={styles.resetSentContainer}>
-          <Ionicons name="mail" size={48} color={theme.primary} />
+          <View style={styles.iconContainer}>
+            <Ionicons name="mail" size={48} color={theme.primary} />
+          </View>
           <Text style={styles.resetSentText}>
             We've sent you an email with instructions to reset your password.
           </Text>
           <TouchableOpacity
-            style={[styles.signInButton, styles.resendButton]}
+            style={[
+              styles.resendButton,
+              resendTimer > 0 && styles.resendButtonDisabled,
+            ]}
             onPress={handleResetPassword}
-            disabled={loading}
+            disabled={loading || resendTimer > 0}
           >
             {loading ? (
-              <ActivityIndicator color={theme.white} />
+              <View style={styles.loadingContainer}>
+                {renderLoadingAnimation(theme.primary, 24)}
+                <Text style={[styles.resendButtonText, { marginLeft: 8 }]}>
+                  Sending...
+                </Text>
+              </View>
             ) : (
-              <Text style={styles.signInButtonText}>Resend Email</Text>
+              <Text
+                style={[
+                  styles.resendButtonText,
+                  resendTimer > 0 && styles.resendButtonTextDisabled,
+                ]}
+              >
+                {resendTimer > 0 ? `Resend in ${resendTimer}s` : "Resend Email"}
+              </Text>
             )}
           </TouchableOpacity>
         </View>
@@ -309,19 +364,54 @@ const styles = StyleSheet.create({
   },
   resetSentContainer: {
     alignItems: "center",
-    paddingVertical: 24,
+    paddingHorizontal: 16,
+    paddingTop: 32,
+    paddingBottom: 24,
+  },
+  iconContainer: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: theme.primary + "10",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 24,
   },
   resetSentText: {
     textAlign: "center",
     fontSize: 16,
     fontFamily: "Poppins_400Regular",
     color: theme.text,
-    marginVertical: 16,
+    marginBottom: 32,
     lineHeight: 24,
   },
   resendButton: {
-    marginTop: 24,
-    backgroundColor: theme.primary + "20",
+    height: 48,
+    paddingHorizontal: 24,
+    backgroundColor: theme.white,
+    borderWidth: 1,
+    borderColor: theme.primary,
+    borderRadius: 12,
+    justifyContent: "center",
+    alignItems: "center",
+    flexDirection: "row",
+  },
+  resendButtonDisabled: {
+    backgroundColor: theme.white,
+    borderColor: theme.textLight,
+  },
+  resendButtonText: {
+    color: theme.primary,
+    fontSize: 16,
+    fontFamily: "Poppins_600SemiBold",
+  },
+  resendButtonTextDisabled: {
+    color: theme.textLight,
+  },
+  loadingContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
   },
 });
 
